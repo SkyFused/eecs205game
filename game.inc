@@ -12,6 +12,26 @@ MouseInfo STRUCT
  buttons DWORD ?
 MouseInfo ENDS
 
+FXPT TYPEDEF SDWORD
+
+SpriteStats STRUCT
+  bitmap DWORD ?
+
+  ;; Position of sprite on screen
+  posX   FXPT ?
+  posY   FXPT ?
+
+  ;; Velocity of sprite
+  velX   FXPT ?
+  velY   FXPT ?
+
+  ;; Acceleration of sprite
+  accX   FXPT ?
+  accY   FXPT ?
+SpriteStats ENDS
+
+SPRITE TYPEDEF SpriteStats
+
 MK_CONTROL  = 0008h  ;; The CTRL key is down.
 MK_LBUTTON  = 0001h  ;; The left mouse button is down.
 MK_MBUTTON  = 0010h  ;; The middle mouse button is down.
@@ -34,8 +54,4 @@ EXTERNDEF KeyPress:DWORD
 ;; User Defined Functions
 GameInit PROTO
 GamePlay PROTO
-CheckIntersect PROTO oneX:DWORD, oneY:DWORD, oneBitmap:PTR EECS205BITMAP, twoX:DWORD, twoY:DWORD, twoBitmap:PTR EECS205BITMAP 
-
-
-
-
+CheckIntersect PROTO oneX:DWORD, oneY:DWORD, oneBitmap:PTR EECS205BITMAP, twoX:DWORD, twoY:DWORD, twoBitmap:PTR EECS205BITMAP
