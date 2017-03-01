@@ -38,10 +38,20 @@ GamePlay PROC
   ;; Clear the screen on each runthrough to prevent artifacts
   INVOKE ClearScreen
 
+  ;; Draw a test star or 2
+  INVOKE BasicBlit, OFFSET StarBitmap, 100, 100
+  INVOKE BasicBlit, OFFSET StarBitmap, 200, 200
+
 	ret
 GamePlay ENDP
 
 CheckIntersect PROTO STDCALL oneX:DWORD, oneY:DWORD, oneBitmap:PTR EECS205BITMAP, twoX:DWORD, twoY:DWORD, twoBitmap:PTR EECS205BITMAP
+;; More comparisons than a 5th grader telling yo momma jokes
+;; Upper Left: (one.x - bitmap.width / 2, one.y - bitmap.height / 2)
+;; Upper Right: (one.x + bitmap.width / 2, one.y - bitmap.height / 2)
+;; Bottom Left: (one.x - bitmap.width / 2, one.y + bitmap.height / 2)
+;; Bottom Right: (one.x + bitmap.width / 2, one.y + bitmap.height / 2)
+
 
   ret
 CheckIntersect ENDP
