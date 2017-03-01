@@ -27,10 +27,11 @@ includelib \masm32\lib\user32.lib
 ;; Collision detection printing strings
 collision_str    BYTE "Collision Detected", 0
 no_collision_str BYTE "No Collision Detected", 0
+mouse_str        BYTE "Mouse Pressed", 0
 
 ;; Sprite struct declarations
 movableStar SPRITE< >
-staticStar  SPRITE< >
+testStar  SPRITE< >
 
 .CODE
 
@@ -60,7 +61,8 @@ clearLoop:
   ret
 ClearScreen ENDP
 
-CheckIntersect PROC USES ebx ecx edx oneX:DWORD, oneY:DWORD, oneBitmap:PTR EECS205BITMAP, twoX:DWORD, twoY:DWORD, twoBitmap:PTR EECS205BITMAP
+CheckIntersect PROC USES ebx ecx edx oneX:DWORD, oneY:DWORD, oneBitmap:PTR EECS205BITMAP,
+twoX:DWORD, twoY:DWORD, twoBitmap:PTR EECS205BITMAP
   ;; More comparisons than a 5th grader telling yo momma jokes
   ;;
   ;; Upper Left: (one.x - bitmap.width / 2, one.y - bitmap.height / 2)
@@ -174,6 +176,7 @@ CheckIntersect ENDP
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 GameInit PROC
   ;; Initialize the movableStar object at (100,320)
+  mov movableStar.bitmap, OFFSET StarBitmap
   mov eax, 100
   shl eax, 16
   mov movableStar.posX, eax
@@ -192,21 +195,23 @@ GameInit PROC
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; Initialize static star
+  mov testStar.bitmap, OFFSET StarBitmap
+
   mov eax, 420
   shl eax, 16
-  mov staticStar.posX, eax
+  mov testStar.posX, eax
 
   mov eax, 320
   shl eax, 16
-  mov staticStar.posY, eax
+  mov testStar.posY, eax
 
   ;; Set vel and acc'l to 0
   xor eax, eax
 
-  mov staticStar.velX, eax
-  mov staticStar.velY, eax
-  mov staticStar.accX, eax
-  mov staticStar.accY, eax
+  mov testStar.velX, eax
+  mov testStar.velY, eax
+  mov testStar.accX, eax
+  mov testStar.accY, eax
 
 	ret
 GameInit ENDP
@@ -242,23 +247,24 @@ GamePlay PROC
   sar ecx, 16
 
   ;; Draw our movableStar
-  INVOKE BasicBlit, OFFSET StarBitmap, ebx, ecx
+  INVOKE BasicBlit, movableStar.bitmap, ebx, ecx
 
-  ;; Draw the staticStar
-  mov ebx, staticStar.posX
+  ;; Draw the testStar
+  mov ebx, testStar.posX
   sar ebx, 16
 
-  mov ecx, staticStar.posY
+  mov ecx, testStar.posY
   sar ecx, 16
-  INVOKE BasicBlit, OFFSET StarBitmap, ebx, ecx
+  INVOKE BasicBlit, testStar.bitmap, ebx, ecx
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; Check if the 2 sprites intersect
   mov eax, movableStar.posX
   mov ebx, movableStar.posY
-  mov ecx, staticStar.posX
-  mov edx, staticStar.posY
-  INVOKE CheckIntersect, eax, ebx, OFFSET StarBitmap, ecx, edx, OFFSET StarBitmap
+
+  mov ecx, testStar.posX
+  mov edx, testStar.posY
+  INVOKE CheckIntersect, eax, ebx, movableStar.bitmap, ecx, edx, testStar.bitmap
 
   ;; See what CheckIntersect returned, and notify on-screen accordingly
   ;; 0 means no collision
@@ -275,12 +281,11 @@ print_no_collision:
 
 away:
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ;; Check if D key was pressed. If yes move right, else JMP done.
+  ;; Check if D key was pressed. If yes move right, else fall through
   mov eax, KeyPress
   cmp eax, VK_D
   jne DNotPressed
 
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; Set velocity
   mov eax, 10
   sal eax, 16
@@ -292,6 +297,36 @@ DNotPressed:
   mov eax, 0
   sal eax, 16
   mov movableStar.velX, eax
+
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;; Check if A key was pressed. If yes move left, else fall through
+  mov eax, KeyPress
+  cmp eax, VK_A
+  jne ANotPressed
+
+  ;; Set velocity
+  mov eax, -10
+  shl eax, 16
+  mov movableStar.velX, eax
+  jmp GamePlayDone
+
+  ;; Stop moving if the key was not pressed
+ANotPressed:
+  mov eax, 0
+  sal eax, 16
+  mov movableStar.velX, eax
+
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;; Check if LMB was pressed. If yes move testStar up, else ret
+  mov eax, MouseStatus.buttons
+  cmp eax, MK_LBUTTON
+  jne GamePlayDone
+
+  ;; Move testStar
+  mov eax, -5
+  shl eax, 16
+  add testStar.posY,eax
+  INVOKE DrawStr, OFFSET mouse_str, 200, 400, 0ffh
 
 ;; We've finished doing something somewhere else, ret
 GamePlayDone:
