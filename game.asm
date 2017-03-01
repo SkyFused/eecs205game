@@ -25,19 +25,26 @@ includelib \masm32\lib\user32.lib
 
 .DATA
 ;; Collision detection printing strings
-str_collision    BYTE "Collision Detected",0
-str_no_collision BYTE "No Collision Detected",0
+collision_str    BYTE "Collision Detected", 0
+no_collision_str BYTE "No Collision Detected", 0
 
 ;; Sprite struct declarations
-deathStar SPRITE< >
+movableStar SPRITE< >
+staticStar  SPRITE< >
 
 .CODE
 
 ;; Clear the screen
-ClearScreen PROC USES eax
+ClearScreen PROC USES eax ebx
+
+  ;; Find end of screen
+  LOCAL ScreenBitsEnd:DWORD
 
   ;; Set up loop for clearing
   mov eax, ScreenBitsPtr
+  mov ebx, ScreenBitsPtr
+  add ebx, 307199
+  mov ScreenBitsEnd, ebx
   xor ebx, ebx
 
 clearLoop:
@@ -47,90 +54,11 @@ clearLoop:
 
   ;; 640 * 480 = 307,200 - 1 for zero index
   ;; Loop through entire screen array
-  cmp eax, 307199
-  jle clearLoop
+  cmp eax, ScreenBitsEnd
+  jl clearLoop
 
   ret
 ClearScreen ENDP
-
-GameInit PROC
-  ;; Initialize the deathStar object at (100,320)
-  mov eax, 100
-  shl eax, 16
-
-  mov deathStar.posX, eax
-
-  mov eax, 320
-  shl eax, 16
-  mov deathStar.posY, eax
-
-  ;; Set vel and acc'l to 0
-  xor eax, eax
-
-  mov deathStar.velX, eax
-  mov deathStar.velY, eax
-  mov deathStar.accX, eax
-  mov deathStar.accY, eax
-
-	ret
-GameInit ENDP
-
-
-GamePlay PROC
-  ;; Clear the screen on each runthrough to prevent artifacts
-  INVOKE ClearScreen
-
-  ;; Draw our backdrop
-  INVOKE DrawStarField
-
-  ;; Draw a test star that we will crash into
-  INVOKE BasicBlit, OFFSET StarBitmap, 420, 320
-
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ;; Do a Newton on the DeathStar and then draw it
-  mov eax, deathStar.accX
-  add deathStar.velX, eax
-
-  mov eax, deathStar.accY
-  add deathStar.velY, eax
-
-  ;; Move the sprite
-  mov eax, deathStar.velX
-  add deathStar.posX, eax
-
-  mov eax, deathStar.velY
-  add deathStar.posY, eax
-
-  ;; Shift positions from FXPT so that we can draw them
-  mov eax, deathStar.posX
-  sar eax, 16
-
-  mov ebx, deathStar.posY
-  sar ebx, 16
-
-  ;; Draw our moved (or not) star
-  INVOKE BasicBlit, OFFSET StarBitmap, eax, ebx
-
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ;; Check if the 2 sprites intersection
-  INVOKE CheckIntersect, eax, ebx, OFFSET StarBitmap, 420, 320, OFFSET StarBitmap
-
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ;; Check if D key was pressed. If yes move right, else JMP done.
-  mov eax, KeyPress
-  cmp eax, VK_D
-  jne GamePlayDone
-
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ;; Set velocity
-  mov eax, 10
-  sal eax, 16
-  mov deathStar.velX, eax
-
-GamePlayDone:
-  ret
-
-GamePlay ENDP
 
 CheckIntersect PROC USES ebx ecx edx oneX:DWORD, oneY:DWORD, oneBitmap:PTR EECS205BITMAP, twoX:DWORD, twoY:DWORD, twoBitmap:PTR EECS205BITMAP
   ;; More comparisons than a 5th grader telling yo momma jokes
@@ -171,7 +99,7 @@ CheckIntersect PROC USES ebx ecx edx oneX:DWORD, oneY:DWORD, oneBitmap:PTR EECS2
 
   ;; oneBottomEdge = oneTopEdge + oneBitmap.dwHeight
   ;; simpler than dividing by 2 again and adding
-  sal ebx, 1
+  shl ebx, 1
   add ecx, ebx
   mov oneBottomEdge, ecx
 
@@ -189,7 +117,7 @@ CheckIntersect PROC USES ebx ecx edx oneX:DWORD, oneY:DWORD, oneBitmap:PTR EECS2
 
   ;; twoRightEdge = twoLeftEdge + twoBitmap.dwWidth
   ;; simpler than dividing by 2 again and adding
-  sal ebx, 1
+  shl ebx, 1
   add ecx, ebx
   mov twoRightEdge, ecx
 
@@ -202,45 +130,173 @@ CheckIntersect PROC USES ebx ecx edx oneX:DWORD, oneY:DWORD, oneBitmap:PTR EECS2
 
   ;; twoBottomEdge = twoTopEdge + twoBitmap.dwHeight
   ;; simpler than dividing by 2 again and adding
-  sal ebx, 1
+  shl ebx, 1
   add ecx, ebx
   mov twoBottomEdge, ecx
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Check for intersections between boxes
 
-  ;; If there's no intersection this will be set to 0
+  ;; If there's no collision this will be set to 0
   mov eax, 1
 
-  ;; If (oneRightEdge ≤ twoLeftEdge) we're clear
+  ;; If (oneRightEdge < twoLeftEdge) we're clear
   mov ebx, oneRightEdge
   cmp ebx, twoLeftEdge
-  jle no_collision
+  jl no_collision
 
-  ;; If (oneLeftEdge ≥ twoRightEdge) we're clear
-  mov ebx, oneLeftEdge
-  cmp ebx, twoRightEdge
-  jge no_collision
-
-  ;; If (oneBottomEdge ≤ twoTopEdge) we're clear
+  ;; If (oneBottomEdge < twoTopEdge) we're clear
   mov ebx, oneBottomEdge
   cmp ebx, twoTopEdge
-  jle no_collision
+  jl no_collision
 
-  ;; If (oneTopEdge ≥ twoBottomEdge) we're clear
+  ;; If (oneLeftEdge > twoRightEdge) we're clear
+  mov ebx, oneLeftEdge
+  cmp ebx, twoRightEdge
+  jg no_collision
+
+  ;; If (oneTopEdge > twoBottomEdge) we're clear
   mov ebx, oneTopEdge
   cmp ebx, twoBottomEdge
-  jge no_collision
+  jg no_collision
 
-  ;; We fell through so there's been an intersection, return eax (1) & notify
-  INVOKE DrawStr, OFFSET str_collision, 0, 460, 0ffh
-  ret
+  ;; Fell through so return eax (1)
+  jmp Intersect_Done
 
-;; A gap between sprites was detected = no intersection, return eax (0) & notify
+;; A gap between sprites was detected = no intersection, return eax (0)
 no_collision:
-  INVOKE DrawStr, OFFSET str_no_collision, 0, 460, 0ffh
-  sub eax, 1
+  mov eax, 0
+
+Intersect_Done:
   ret
 CheckIntersect ENDP
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+GameInit PROC
+  ;; Initialize the movableStar object at (100,320)
+  mov eax, 100
+  shl eax, 16
+  mov movableStar.posX, eax
+
+  mov eax, 320
+  shl eax, 16
+  mov movableStar.posY, eax
+
+  ;; Set vel and acc'l to 0
+  xor eax, eax
+
+  mov movableStar.velX, eax
+  mov movableStar.velY, eax
+  mov movableStar.accX, eax
+  mov movableStar.accY, eax
+
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;; Initialize static star
+  mov eax, 420
+  shl eax, 16
+  mov staticStar.posX, eax
+
+  mov eax, 320
+  shl eax, 16
+  mov staticStar.posY, eax
+
+  ;; Set vel and acc'l to 0
+  xor eax, eax
+
+  mov staticStar.velX, eax
+  mov staticStar.velY, eax
+  mov staticStar.accX, eax
+  mov staticStar.accY, eax
+
+	ret
+GameInit ENDP
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+GamePlay PROC
+  ;; Clear the screen on each runthrough to prevent artifacts
+  INVOKE ClearScreen
+
+  ;; Draw our background
+  INVOKE DrawStarField
+
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;; Do a physics on the movableStar and then draw it
+  mov eax, movableStar.accX
+  add movableStar.velX, eax
+
+  mov eax, movableStar.accY
+  add movableStar.velY, eax
+
+  ;; Move the sprite
+  mov eax, movableStar.velX
+  add movableStar.posX, eax
+
+  mov eax, movableStar.velY
+  add movableStar.posY, eax
+
+  ;; Shift positions from FXPT so that we can draw them
+  mov ebx, movableStar.posX
+  sar ebx, 16
+
+  mov ecx, movableStar.posY
+  sar ecx, 16
+
+  ;; Draw our movableStar
+  INVOKE BasicBlit, OFFSET StarBitmap, ebx, ecx
+
+  ;; Draw the staticStar
+  mov ebx, staticStar.posX
+  sar ebx, 16
+
+  mov ecx, staticStar.posY
+  sar ecx, 16
+  INVOKE BasicBlit, OFFSET StarBitmap, ebx, ecx
+
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;; Check if the 2 sprites intersect
+  mov eax, movableStar.posX
+  mov ebx, movableStar.posY
+  mov ecx, staticStar.posX
+  mov edx, staticStar.posY
+  INVOKE CheckIntersect, eax, ebx, OFFSET StarBitmap, ecx, edx, OFFSET StarBitmap
+
+  ;; See what CheckIntersect returned, and notify on-screen accordingly
+  ;; 0 means no collision
+  ;; 1 means collision
+  cmp eax, 0
+  je print_no_collision
+
+  ;; fell through so there was a collision, print that
+  INVOKE DrawStr, OFFSET collision_str, 400, 400, 0ffh
+  jmp away
+
+print_no_collision:
+  INVOKE DrawStr, OFFSET no_collision_str, 400, 400, 0ffh
+
+away:
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;; Check if D key was pressed. If yes move right, else JMP done.
+  mov eax, KeyPress
+  cmp eax, VK_D
+  jne DNotPressed
+
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;; Set velocity
+  mov eax, 10
+  sal eax, 16
+  mov movableStar.velX, eax
+  jmp GamePlayDone
+
+  ;; Stop moving if the key was not pressed
+DNotPressed:
+  mov eax, 0
+  sal eax, 16
+  mov movableStar.velX, eax
+
+;; We've finished doing something somewhere else, ret
+GamePlayDone:
+  ret
+
+GamePlay ENDP
 
 END
