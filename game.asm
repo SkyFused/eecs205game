@@ -24,6 +24,12 @@ include \masm32\include\user32.inc
 includelib \masm32\lib\user32.lib
 
 .DATA
+;; Collision detection printing strings
+str_collision    BYTE "Collision Detected",0
+str_no_collision BYTE "No Collision Detected",0
+
+;; Sprite struct declarations
+deathStar SPRITE< >
 
 .CODE
 
@@ -48,6 +54,23 @@ clearLoop:
 ClearScreen ENDP
 
 GameInit PROC
+  ;; Initialize the deathStar object at (100,320)
+  mov eax, 100
+  shl eax, 16
+
+  mov deathStar.posX, eax
+
+  mov eax, 320
+  shl eax, 16
+  mov deathStar.posY, eax
+
+  ;; Set vel and acc'l to 0
+  xor eax, eax
+
+  mov deathStar.velX, eax
+  mov deathStar.velY, eax
+  mov deathStar.accX, eax
+  mov deathStar.accY, eax
 
 	ret
 GameInit ENDP
@@ -60,11 +83,53 @@ GamePlay PROC
   ;; Draw our backdrop
   INVOKE DrawStarField
 
-  ;; Draw a test star or 2
-  INVOKE BasicBlit, OFFSET StarBitmap, 100, 100
-  INVOKE BasicBlit, OFFSET StarBitmap, 200, 200
+  ;; Draw a test star that we will crash into
+  INVOKE BasicBlit, OFFSET StarBitmap, 420, 320
 
-	ret
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;; Do a Newton on the DeathStar and then draw it
+  mov eax, deathStar.accX
+  add deathStar.velX, eax
+
+  mov eax, deathStar.accY
+  add deathStar.velY, eax
+
+  ;; Move the sprite
+  mov eax, deathStar.velX
+  add deathStar.posX, eax
+
+  mov eax, deathStar.velY
+  add deathStar.posY, eax
+
+  ;; Shift positions from FXPT so that we can draw them
+  mov eax, deathStar.posX
+  sar eax, 16
+
+  mov ebx, deathStar.posY
+  sar ebx, 16
+
+  ;; Draw our moved (or not) star
+  INVOKE BasicBlit, OFFSET StarBitmap, eax, ebx
+
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;; Check if the 2 sprites intersection
+  INVOKE CheckIntersect, eax, ebx, OFFSET StarBitmap, 420, 320, OFFSET StarBitmap
+
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;; Check if D key was pressed. If yes move right, else JMP done.
+  mov eax, KeyPress
+  cmp eax, VK_D
+  jne GamePlayDone
+
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;; Set velocity
+  mov eax, 10
+  sal eax, 16
+  mov deathStar.velX, eax
+
+GamePlayDone:
+  ret
+
 GamePlay ENDP
 
 CheckIntersect PROC USES ebx ecx edx oneX:DWORD, oneY:DWORD, oneBitmap:PTR EECS205BITMAP, twoX:DWORD, twoY:DWORD, twoBitmap:PTR EECS205BITMAP
@@ -167,11 +232,13 @@ CheckIntersect PROC USES ebx ecx edx oneX:DWORD, oneY:DWORD, oneBitmap:PTR EECS2
   cmp ebx, twoBottomEdge
   jge no_collision
 
-  ;; We fell through so there's been an intersection, return eax (1)
+  ;; We fell through so there's been an intersection, return eax (1) & notify
+  INVOKE DrawStr, OFFSET str_collision, 0, 460, 0ffh
   ret
 
-;; A gap between sprites was detected so no intersection
+;; A gap between sprites was detected = no intersection, return eax (0) & notify
 no_collision:
+  INVOKE DrawStr, OFFSET str_no_collision, 0, 460, 0ffh
   sub eax, 1
   ret
 CheckIntersect ENDP
