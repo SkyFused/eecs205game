@@ -14,23 +14,24 @@ MouseInfo ENDS
 
 FXPT TYPEDEF SDWORD
 
-SpriteStats STRUCT
+ObjStruct STRUCT
+  ;; bitmap to use for this object
   bitmap DWORD ?
 
-  ;; Position of sprite on screen
+  ;; Position of obj on screen
   posX   FXPT ?
   posY   FXPT ?
 
-  ;; Velocity of sprite
+  ;; Velocity of obj
   velX   FXPT ?
   velY   FXPT ?
 
-  ;; Acceleration of sprite
+  ;; Acceleration of obj
   accX   FXPT ?
   accY   FXPT ?
-SpriteStats ENDS
+ObjStruct ENDS
 
-SPRITE TYPEDEF SpriteStats
+OBJECT TYPEDEF ObjStruct
 
 MK_CONTROL  = 0008h  ;; The CTRL key is down.
 MK_LBUTTON  = 0001h  ;; The left mouse button is down.
