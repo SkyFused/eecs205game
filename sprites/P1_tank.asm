@@ -25,7 +25,7 @@ includelib \masm32\lib\user32.lib
 
 .DATA
 
-
+;; player 1 tank, faces right
 P1TANK EECS205BITMAP <50, 38, 0ffh,, offset P1TANK + sizeof P1TANK>
 	BYTE 0ffh,0ffh,0ffh,0ffh,0ffh,0ffh,0ffh,0ffh,0ffh,0ffh,0ffh,0ffh,0ffh,0ffh,0ffh,0ffh
 	BYTE 0ffh,0ffh,0ffh,0ffh,0ffh,0ffh,0ffh,0ffh,0ffh,0ffh,0ffh,0ffh,0ffh,0ffh,0ffh,0ffh
@@ -147,6 +147,7 @@ P1TANK EECS205BITMAP <50, 38, 0ffh,, offset P1TANK + sizeof P1TANK>
 	BYTE 0ffh,0ffh,0ffh,0ffh,0ffh,0ffh,0ffh,0ffh,0ffh,0ffh,0dbh,020h,000h,024h,020h,020h
 	BYTE 000h,024h,020h,000h,0b6h,0ffh,0ffh,0ffh,0ffh,0ffh,0ffh,0ffh
 
+;; player 2 tank, faces left
 P2TANK EECS205BITMAP <50, 38, 06dh,, offset P2TANK + sizeof P2TANK>
 	BYTE 06dh,06dh,06dh,06dh,06dh,06dh,049h,092h,091h,048h,06dh,06dh,06dh,06dh,06dh,06dh
 	BYTE 06dh,06dh,06dh,06dh,06dh,06dh,06dh,06dh,06dh,06dh,06dh,06dh,06dh,06dh,06dh,06dh

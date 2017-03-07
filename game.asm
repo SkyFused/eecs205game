@@ -221,7 +221,7 @@ GamePlay PROC
   ;; Clear the screen on each runthrough to prevent artifacts
   INVOKE ClearScreen
 
-  ;; Draw our background
+  ;; Draw the background
   INVOKE DrawStarField
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
