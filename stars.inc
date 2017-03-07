@@ -6,7 +6,8 @@
 ; #########################################################################
 
 
-DrawStar proto stdcall x:DWORD, y:DWORD
+DrawStar PROTO STDCALL x:DWORD, y:DWORD
 
-DrawStarField proto stdcall
+DrawStarField PROTO STDCALL
 
+DrawPauseField PROTO STDCALL

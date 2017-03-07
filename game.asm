@@ -28,6 +28,11 @@ includelib \masm32\lib\user32.lib
 collision_str    BYTE "Collision Detected", 0
 no_collision_str BYTE "No Collision Detected", 0
 mouse_str        BYTE "Mouse Pressed", 0
+paused_msg       BYTE "Game Paused", 0
+unpause_msg      BYTE "Press tab to resume!", 0
+
+;; Game state vars
+paused_state DWORD 0
 
 ;; Sprite struct declarations
 Player1 OBJECT< >
@@ -221,6 +226,32 @@ GamePlay PROC
   ;; Clear the screen on each runthrough to prevent artifacts
   INVOKE ClearScreen
 
+  ;; Check right away if tab was pressed. Only render pause screen if yes
+  mov eax, KeyPress
+  cmp eax, VK_TAB
+  jne tab_not_pressed
+
+  ;; the tab key was pressed, check if game already paused
+  cmp paused_state, 0
+  jne draw_game
+  mov paused_state, 1
+
+draw_paused:
+  INVOKE DrawPauseField
+  INVOKE DrawStr, OFFSET paused_msg, 280, 220, 0ffh
+  INVOKE DrawStr, OFFSET unpause_msg, 240, 240, 0ffh
+  jmp GamePlayDone
+
+tab_not_pressed:
+  ;; tab was not pressed, check if we're paused tho
+  mov eax, paused_state
+  cmp eax, 1
+  je draw_paused
+
+draw_game:
+  ;; Clear the pause state
+  mov paused_state, 0
+  
   ;; Draw the background
   INVOKE DrawStarField
   INVOKE DrawRect, 0, 400, 639, 479, 0ffh
