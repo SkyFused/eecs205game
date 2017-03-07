@@ -223,6 +223,7 @@ GamePlay PROC
 
   ;; Draw the background
   INVOKE DrawStarField
+  INVOKE DrawRect, 0, 400, 639, 479, 0ffh
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; Do a physics on the Player1 and then draw it

@@ -20,3 +20,5 @@ EXTERNDEF ScreenBitsPtr:DWORD
 BasicBlit PROTO STDCALL ptrBitmap:PTR EECS205BITMAP, xcenter:DWORD, ycenter:DWORD
 
 RotateBlit PROTO STDCALL ptrBitmap:PTR EECS205BITMAP, xcenter:DWORD, ycenter:DWORD, angle:FXPT
+
+DrawRect PROTO STDCALL x1:DWORD, y1:DWORD, x2:DWORD, y2:DWORD, color:DWORD

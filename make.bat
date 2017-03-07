@@ -64,11 +64,10 @@ link /SUBSYSTEM:WINDOWS  /LIBPATH:%MASMLIBPATH% game.obj blit.obj sprites.obj tr
 
 if %errorlevel% neq 0 goto :error
 
-pause
+
 	echo Executable built succesfully.
 
 goto :EOF
 
 :error
 echo Failed with error #%errorlevel%
-pause

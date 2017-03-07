@@ -22,7 +22,7 @@ include blit.inc
 
 .CODE
 
-DrawPixel PROC USES ebx x:DWORD, y:DWORD, color:DWORD
+DrawPixel PROC USES ebx edx x:DWORD, y:DWORD, color:DWORD
   ; screen width = x = 640px, height = y = 480px
   ; if given value outside of [0,639] for width or
   ; [0,479] for height, don't draw anthing.
@@ -58,6 +58,33 @@ DrawPixel PROC USES ebx x:DWORD, y:DWORD, color:DWORD
 clip_map:
 	ret
 DrawPixel ENDP
+
+DrawRect PROC USES ebx ecx edx x1:DWORD, y1:DWORD, x2:DWORD, y2:DWORD, color:DWORD
+
+  ;; set GPR for counters and eval
+  mov ebx, x1
+  mov edx, color
+  jmp outer_eval_rect
+
+outer_loop_rect:
+  ;; re-initialize y1 each run
+  mov ecx, y1
+
+inner_loop_rect:
+  INVOKE DrawPixel, ebx, ecx, dl
+  inc ecx
+
+inner_eval_rect:
+  cmp ecx, y2
+  jle inner_loop_rect
+  inc ebx
+
+outer_eval_rect:
+  cmp ebx, x2
+  jle outer_loop_rect
+
+  ret
+DrawRect ENDP
 
 BasicBlit PROC USES ebx ecx edx edi esi ptrBitmap:PTR EECS205BITMAP , xcenter:DWORD, ycenter:DWORD
 ; Draw a bitmap of dwWidth and dwHeight centered at [xcenter, ycenter]
