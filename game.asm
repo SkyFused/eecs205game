@@ -32,7 +32,9 @@ paused_msg       BYTE "Game Paused", 0
 unpause_msg      BYTE "Press tab to resume!", 0
 
 ;; Game state vars
-paused_state DWORD 0
+paused_state   DWORD 0
+tabloop_active DWORD 0
+tabinit_active DWORD 0
 
 ;; Sprite struct declarations
 Player1 OBJECT< >
@@ -218,46 +220,59 @@ GameInit PROC
   mov Player2.accX, eax
   mov Player2.accY, eax
 
+  ;; Make sure game is not paused on startup
+  mov paused_state, 0
+  mov KeyPress, 0
+
 	ret
 GameInit ENDP
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 GamePlay PROC
+  ;; Game not paused, waiting for TAB to be released to pause
+  cmp tabinit_active, 1
+  je TABINIT
+
+  ;; Game paused, waiting for TAB to be released to unpause
+  cmp tabloop_active, 1
+  je TABLOOP
+
   ;; Clear the screen on each runthrough to prevent artifacts
   INVOKE ClearScreen
 
-  ;; Check right away if tab was pressed. Only render pause screen if yes
-  mov eax, KeyPress
-  cmp eax, VK_TAB
-  jne tab_not_pressed
-
-  ;; the tab key was pressed, check if game already paused
-  cmp paused_state, 0
+  ;; Check right away if game is paused. Only render pause screen if yes
+  cmp paused_state, 1
   jne draw_game
-  mov paused_state, 1
 
+  ;; The game is paused. Draw it and check TAB keypress
 draw_paused:
   INVOKE DrawPauseField
   INVOKE DrawStr, OFFSET paused_msg, 280, 220, 0ffh
   INVOKE DrawStr, OFFSET unpause_msg, 240, 240, 0ffh
+
+  ;; Now check if TAB is currently being pressed
+  mov eax, KeyPress
+  cmp eax, VK_TAB
+  jne GamePlayDone
+
+  mov tabinit_active, 1
+  ;; TAB is being pressed, wait for it to be released
+TABINIT:
+  cmp KeyPress, 0
+  jne GamePlayDone
+
+  ;; Fallthrough: TAB was released, reset pause state and ret
+  mov tabinit_active, 0
+  mov paused_state, 0
   jmp GamePlayDone
 
-tab_not_pressed:
-  ;; tab was not pressed, check if we're paused tho
-  mov eax, paused_state
-  cmp eax, 1
-  je draw_paused
-
 draw_game:
-  ;; Clear the pause state
-  mov paused_state, 0
-  
   ;; Draw the background
   INVOKE DrawStarField
   INVOKE DrawRect, 0, 400, 639, 479, 0ffh
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ;; Do a physics on the Player1 and then draw it
+  ;; Do a physics on Player1 and then draw it
   mov eax, Player1.accX
   add Player1.velX, eax
 
@@ -278,10 +293,10 @@ draw_game:
   mov ecx, Player1.posY
   sar ecx, 16
 
-  ;; Draw our Player1
+  ;; Draw Player1
   INVOKE BasicBlit, Player1.bitmap, ebx, ecx
 
-  ;; Draw the Player2
+  ;; Draw Player2
   mov ebx, Player2.posX
   sar ebx, 16
 
@@ -352,13 +367,32 @@ ANotPressed:
   ;; Check if LMB was pressed. If yes move Player2 up, else ret
   mov eax, MouseStatus.buttons
   cmp eax, MK_LBUTTON
-  jne GamePlayDone
+  jne MouseNotPressed
 
   ;; Move Player2
   mov eax, -5
   shl eax, 16
   add Player2.posY,eax
   INVOKE DrawStr, OFFSET mouse_str, 200, 400, 0ffh
+
+MouseNotPressed:
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;; Check if TAB was pressed. If yes , wait for it to be released, then
+  ;; set the paused_state bool.
+  mov eax, KeyPress
+  cmp eax, VK_TAB
+  jne GamePlayDone
+
+  mov tabloop_active, 1
+
+  ;; TAB is currently down, wait until it is released.
+TABLOOP:
+  cmp KeyPress, 0
+  jne GamePlayDone
+
+  ;; TAB was released, set state and RET
+  mov tabloop_active, 0
+  mov paused_state, 1
 
 ;; We've finished doing something somewhere else, ret
 GamePlayDone:
