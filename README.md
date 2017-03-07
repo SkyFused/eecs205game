@@ -8,5 +8,5 @@ to hit their target. You can move and shoot on your turn, and it will be to your
 by making hits on your target, and use this to buy upgrades.
 
 ## Controls
-P1: WASD + Space to fire
-P2: Arrow keys + RShift to fire
+* P1: WASD + Space to fire
+* P2: Arrow keys + RShift to fire
