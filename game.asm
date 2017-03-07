@@ -30,8 +30,8 @@ no_collision_str BYTE "No Collision Detected", 0
 mouse_str        BYTE "Mouse Pressed", 0
 
 ;; Sprite struct declarations
-movableStar SPRITE< >
-testStar  SPRITE< >
+Player1 OBJECT< >
+Player2  OBJECT< >
 
 .CODE
 
@@ -175,43 +175,43 @@ CheckIntersect ENDP
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 GameInit PROC
-  ;; Initialize the movableStar object at (100,320)
-  mov movableStar.bitmap, OFFSET StarBitmap
+  ;; Initialize P1 at (100,380)
+  mov Player1.bitmap, OFFSET P1TANK
   mov eax, 100
   shl eax, 16
-  mov movableStar.posX, eax
+  mov Player1.posX, eax
 
-  mov eax, 320
+  mov eax, 380
   shl eax, 16
-  mov movableStar.posY, eax
+  mov Player1.posY, eax
 
   ;; Set vel and acc'l to 0
   xor eax, eax
 
-  mov movableStar.velX, eax
-  mov movableStar.velY, eax
-  mov movableStar.accX, eax
-  mov movableStar.accY, eax
+  mov Player1.velX, eax
+  mov Player1.velY, eax
+  mov Player1.accX, eax
+  mov Player1.accY, eax
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ;; Initialize static star
-  mov testStar.bitmap, OFFSET StarBitmap
+  ;; Initialize P2 at (500, 380)
+  mov Player2.bitmap, OFFSET P2TANK
 
-  mov eax, 420
+  mov eax, 500
   shl eax, 16
-  mov testStar.posX, eax
+  mov Player2.posX, eax
 
-  mov eax, 320
+  mov eax, 380
   shl eax, 16
-  mov testStar.posY, eax
+  mov Player2.posY, eax
 
   ;; Set vel and acc'l to 0
   xor eax, eax
 
-  mov testStar.velX, eax
-  mov testStar.velY, eax
-  mov testStar.accX, eax
-  mov testStar.accY, eax
+  mov Player2.velX, eax
+  mov Player2.velY, eax
+  mov Player2.accX, eax
+  mov Player2.accY, eax
 
 	ret
 GameInit ENDP
@@ -225,46 +225,46 @@ GamePlay PROC
   INVOKE DrawStarField
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ;; Do a physics on the movableStar and then draw it
-  mov eax, movableStar.accX
-  add movableStar.velX, eax
+  ;; Do a physics on the Player1 and then draw it
+  mov eax, Player1.accX
+  add Player1.velX, eax
 
-  mov eax, movableStar.accY
-  add movableStar.velY, eax
+  mov eax, Player1.accY
+  add Player1.velY, eax
 
   ;; Move the sprite
-  mov eax, movableStar.velX
-  add movableStar.posX, eax
+  mov eax, Player1.velX
+  add Player1.posX, eax
 
-  mov eax, movableStar.velY
-  add movableStar.posY, eax
+  mov eax, Player1.velY
+  add Player1.posY, eax
 
   ;; Shift positions from FXPT so that we can draw them
-  mov ebx, movableStar.posX
+  mov ebx, Player1.posX
   sar ebx, 16
 
-  mov ecx, movableStar.posY
+  mov ecx, Player1.posY
   sar ecx, 16
 
-  ;; Draw our movableStar
-  INVOKE BasicBlit, movableStar.bitmap, ebx, ecx
+  ;; Draw our Player1
+  INVOKE BasicBlit, Player1.bitmap, ebx, ecx
 
-  ;; Draw the testStar
-  mov ebx, testStar.posX
+  ;; Draw the Player2
+  mov ebx, Player2.posX
   sar ebx, 16
 
-  mov ecx, testStar.posY
+  mov ecx, Player2.posY
   sar ecx, 16
-  INVOKE BasicBlit, testStar.bitmap, ebx, ecx
+  INVOKE BasicBlit, Player2.bitmap, ebx, ecx
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; Check if the 2 sprites intersect
-  mov eax, movableStar.posX
-  mov ebx, movableStar.posY
+  mov eax, Player1.posX
+  mov ebx, Player1.posY
 
-  mov ecx, testStar.posX
-  mov edx, testStar.posY
-  INVOKE CheckIntersect, eax, ebx, movableStar.bitmap, ecx, edx, testStar.bitmap
+  mov ecx, Player2.posX
+  mov edx, Player2.posY
+  INVOKE CheckIntersect, eax, ebx, Player1.bitmap, ecx, edx, Player2.bitmap
 
   ;; See what CheckIntersect returned, and notify on-screen accordingly
   ;; 0 means no collision
@@ -289,14 +289,14 @@ away:
   ;; Set velocity
   mov eax, 10
   sal eax, 16
-  mov movableStar.velX, eax
+  mov Player1.velX, eax
   jmp GamePlayDone
 
   ;; Stop moving if the key was not pressed
 DNotPressed:
   mov eax, 0
   sal eax, 16
-  mov movableStar.velX, eax
+  mov Player1.velX, eax
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; Check if A key was pressed. If yes move left, else fall through
@@ -307,25 +307,25 @@ DNotPressed:
   ;; Set velocity
   mov eax, -10
   shl eax, 16
-  mov movableStar.velX, eax
+  mov Player1.velX, eax
   jmp GamePlayDone
 
   ;; Stop moving if the key was not pressed
 ANotPressed:
   mov eax, 0
   sal eax, 16
-  mov movableStar.velX, eax
+  mov Player1.velX, eax
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ;; Check if LMB was pressed. If yes move testStar up, else ret
+  ;; Check if LMB was pressed. If yes move Player2 up, else ret
   mov eax, MouseStatus.buttons
   cmp eax, MK_LBUTTON
   jne GamePlayDone
 
-  ;; Move testStar
+  ;; Move Player2
   mov eax, -5
   shl eax, 16
-  add testStar.posY,eax
+  add Player2.posY,eax
   INVOKE DrawStr, OFFSET mouse_str, 200, 400, 0ffh
 
 ;; We've finished doing something somewhere else, ret
