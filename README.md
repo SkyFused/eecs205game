@@ -1,4 +1,4 @@
-# eecs205game
+# Space Tanks
 Loosely inspired by this 2 player tank game I played on my friend's iPhone like 10 years ago. Fight against
 a friend in a battle to the death. Last tank standing wins!
 
