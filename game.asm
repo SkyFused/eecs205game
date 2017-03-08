@@ -40,6 +40,10 @@ tabinit_active DWORD 0
 Player1 OBJECT< >
 Player2  OBJECT< >
 
+;; Collision vars
+xCollide DWORD 0
+yCollide DWORD 0
+
 .CODE
 
 ;; Clear the screen
@@ -68,115 +72,93 @@ clearLoop:
   ret
 ClearScreen ENDP
 
-CheckIntersect PROC USES ebx ecx edx oneX:DWORD, oneY:DWORD, oneBitmap:PTR EECS205BITMAP,
+CheckIntersect PROC USES ebx oneX:DWORD, oneY:DWORD, oneBitmap:PTR EECS205BITMAP,
 twoX:DWORD, twoY:DWORD, twoBitmap:PTR EECS205BITMAP
   ;; More comparisons than a 5th grader telling yo momma jokes
   ;;
-  ;; Upper Left: (one.x - bitmap.width / 2, one.y - bitmap.height / 2)
-  ;; Upper Right: (one.x + bitmap.width / 2, one.y - bitmap.height / 2)
-  ;; Bottom Left: (one.x - bitmap.width / 2, one.y + bitmap.height / 2)
-  ;; Bottom Right: (one.x + bitmap.width / 2, one.y + bitmap.height / 2)
+  ;; return (((x.width / 2) + (y.width / 2)) < (abs (x1 - x2)) &&
+  ;;        ((x.height / 2) + (y.height / 2)) < (abs (y1 -y2)))
+  ;;
+  ;; Calculate half-width and half-height for faster computes
+  LOCAL oneHalfHeight:DWORD, oneHalfWidth:DWORD, twoHalfHeight:DWORD, twoHalfWidth:DWORD
 
-  ;; Allocate some storage to keep track of box bounds
-  LOCAL oneLeftEdge:DWORD, oneRightEdge:DWORD, oneTopEdge:DWORD, oneBottomEdge:DWORD
-  LOCAL twoLeftEdge:DWORD, twoRightEdge:DWORD, twoTopEdge:DWORD, twoBottomEdge:DWORD
+  ;; Clear out collision vars from before
+  mov xCollide, 0
+  mov yCollide, 0
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Create bounding box for first sprite
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;; Chop some widths and heights
+  mov ebx, oneBitmap
 
-  mov edx, oneBitmap
+  mov eax, (EECS205BITMAP PTR [ebx]).dwWidth
+  sar eax, 1
+  mov oneHalfWidth, eax
 
-  ;; oneLeftEdge = oneX - oneBitmap.dwWidth / 2
-  mov ebx, (EECS205BITMAP PTR [edx]).dwWidth
-  sar ebx, 1
-  mov ecx, oneX
-  sub ecx, ebx
-  mov oneLeftEdge, ecx
+  mov eax,(EECS205BITMAP PTR [ebx]).dwHeight
+  sar eax, 1
+  mov oneHalfHeight, eax
 
-  ;; oneRightEdge = oneLeftEdge + oneBitmap.dwWidth
-  ;; simpler than dividing by 2 again and adding
-  shl ebx, 1
-  add ecx, ebx
-  mov oneRightEdge, ecx
+  ;; Next bitmap
+  mov ebx, twoBitmap
 
-  ;; oneTopEdge = oneY - oneBitmap.dwHeight / 2
-  mov ebx, (EECS205BITMAP PTR [edx]).dwHeight
-  sar ebx, 1
-  mov ecx, oneY
-  sub ecx, ebx
-  mov oneTopEdge, ecx
+  mov eax, (EECS205BITMAP PTR [ebx]).dwWidth
+  sar eax, 1
+  mov twoHalfWidth, eax
 
-  ;; oneBottomEdge = oneTopEdge + oneBitmap.dwHeight
-  ;; simpler than dividing by 2 again and adding
-  shl ebx, 1
-  add ecx, ebx
-  mov oneBottomEdge, ecx
+  mov eax,(EECS205BITMAP PTR [ebx]).dwHeight
+  sar eax, 1
+  mov twoHalfHeight, eax
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Create bounding box for second sprite
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;; Compute x-axis intersection
+  mov eax, oneHalfWidth
+  add eax, twoHalfWidth
 
-  mov edx, twoBitmap
+  mov ebx, twoX
+  sub ebx, oneX
+  cmp ebx, 0
+  jg eval_x_axis
 
-  ;; twoLeftEdge = twoX - twoBitmap.dwWidth / 2
-  mov ebx, (EECS205BITMAP PTR [edx]).dwWidth
-  sar ebx, 1
-  mov ecx, twoX
-  sub ecx, ebx
-  mov twoLeftEdge, ecx
+  ;; fell through; compute abs(ebx)
+  neg ebx
 
-  ;; twoRightEdge = twoLeftEdge + twoBitmap.dwWidth
-  ;; simpler than dividing by 2 again and adding
-  shl ebx, 1
-  add ecx, ebx
-  mov twoRightEdge, ecx
+eval_x_axis:
+  cmp eax, ebx
+  jl compute_y_axis
 
-  ;; twoTopEdge = twoY - twoBitmap.dwHeight / 2
-  mov ebx, (EECS205BITMAP PTR [edx]).dwHeight
-  sar ebx, 1
-  mov ecx, twoY
-  sub ecx, ebx
-  mov twoTopEdge, ecx
+  ;; Fell through so there's potentially a collision on the x-axis.
+  ;; Set the flag and check y-axis
+  mov xCollide, 1
 
-  ;; twoBottomEdge = twoTopEdge + twoBitmap.dwHeight
-  ;; simpler than dividing by 2 again and adding
-  shl ebx, 1
-  add ecx, ebx
-  mov twoBottomEdge, ecx
+compute_y_axis:
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;; Compute y-axis intersection
+  mov eax, oneHalfHeight
+  add eax, twoHalfHeight
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Check for intersections between boxes
+  mov ebx, twoY
+  sub ebx, oneY
+  cmp ebx, 0
+  jg eval_y_axis
 
-  ;; If there's no collision this will be set to 0
-  mov eax, 1
+  ;; fell through; compute abs(ebx)
+  neg ebx
 
-  ;; If (oneRightEdge < twoLeftEdge) we're clear
-  mov ebx, oneRightEdge
-  cmp ebx, twoLeftEdge
-  jl no_collision
+eval_y_axis:
+  cmp eax, ebx
+  jl compute_intersect
 
-  ;; If (oneBottomEdge < twoTopEdge) we're clear
-  mov ebx, oneBottomEdge
-  cmp ebx, twoTopEdge
-  jl no_collision
+  ;; Fell through so there's potentially a collision on the y-axis.
+  ;; Set the flag and cross check with x-axis
+  mov yCollide, 1
 
-  ;; If (oneLeftEdge > twoRightEdge) we're clear
-  mov ebx, oneLeftEdge
-  cmp ebx, twoRightEdge
-  jg no_collision
+compute_intersect:
+  mov eax, xCollide
+  mov ebx, yCollide
+  and eax, ebx
 
-  ;; If (oneTopEdge > twoBottomEdge) we're clear
-  mov ebx, oneTopEdge
-  cmp ebx, twoBottomEdge
-  jg no_collision
-
-  ;; Fell through so return eax (1)
-  jmp Intersect_Done
-
-;; A gap between sprites was detected = no intersection, return eax (0)
-no_collision:
-  mov eax, 0
-
-Intersect_Done:
+  ;; From the AND, eax will have either a 1 if collision or 0 if none.
+  ;; In either case, return it.
   ret
 CheckIntersect ENDP
 
@@ -320,11 +302,11 @@ draw_game:
   je print_no_collision
 
   ;; fell through so there was a collision, print that
-  INVOKE DrawStr, OFFSET collision_str, 400, 400, 0ffh
+  INVOKE DrawStr, OFFSET collision_str, 300, 300, 0ffh
   jmp away
 
 print_no_collision:
-  INVOKE DrawStr, OFFSET no_collision_str, 400, 400, 0ffh
+  INVOKE DrawStr, OFFSET no_collision_str, 300, 300, 0ffh
 
 away:
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

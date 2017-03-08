@@ -10,3 +10,4 @@ by making hits on your target, and use this to buy upgrades.
 ## Controls
 * P1: WASD + Space to fire
 * P2: Arrow keys + RShift to fire
+* Tab to pause
