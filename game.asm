@@ -20,6 +20,9 @@ include game.inc
 include keys.inc
 
 ;; Library Includes
+include\masm32\include\windows.inc
+include\masm32\include\winmm.inc
+includelib\masm32\lib\winmm.lib
 include \masm32\include\user32.inc
 includelib \masm32\lib\user32.lib
 
@@ -33,6 +36,9 @@ includelib \masm32\lib\user32.lib
   p2_fire_str      BYTE "P2 fired!", 0
   tank_pos_str     BYTE "x: %d", 0
   tank_pos_out     BYTE 16 DUP (0)
+
+  ;; Sounds
+  fire_snd         BYTE "fire_01.wav", 0
 
   ;; Game info strings
   paused_msg       BYTE "Game Paused", 0
@@ -431,15 +437,13 @@ GamePlay PROC
   cmp P1Shot.is_active, 1
   jne skip_proj
 
-  ;; mov eax, P1Shot.accY
-  ;; add P1Shot.velY, eax
-;;
-  ;; ;; Move the bullet
-  ;; mov eax, P1Shot.velX
-  ;; add P1Shot.posX, eax
-;;
-  ;; mov eax, P1Shot.velY
-  ;; sub P1Shot.posY, eax
+  mov eax, P1Shot.accY
+  add P1Shot.velY, eax
+  ;; Move the bullet
+  mov eax, P1Shot.velX
+  add P1Shot.posX, eax
+  mov eax, P1Shot.velY
+  sub P1Shot.posY, eax
 
   ;; Shift position and render bullet
   mov ebx, P1Shot.posX
@@ -571,6 +575,8 @@ GamePlay PROC
   mov Player1.is_turn, 0
   mov Player2.is_turn, 1
 
+  INVOKE PlaySound, OFFSET fire_snd , 0, SND_FILENAME OR SND_ASYNC
+
   mov KeyPress, 0
   jmp SpaceNotPressed
 
@@ -588,6 +594,8 @@ GamePlay PROC
 
   mov Player1.is_turn, 1
   mov Player2.is_turn, 0
+
+  INVOKE PlaySound, OFFSET fire_snd , 0, SND_FILENAME OR SND_ASYNC
 
   mov KeyPress, 0
   SpaceNotPressed:
