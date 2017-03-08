@@ -22,3 +22,5 @@ BasicBlit PROTO STDCALL ptrBitmap:PTR EECS205BITMAP, xcenter:DWORD, ycenter:DWOR
 RotateBlit PROTO STDCALL ptrBitmap:PTR EECS205BITMAP, xcenter:DWORD, ycenter:DWORD, angle:FXPT
 
 DrawRect PROTO STDCALL x1:DWORD, y1:DWORD, x2:DWORD, y2:DWORD, color:DWORD
+
+VarToStr PROTO STDCALL Arg:DWORD, FormatStr:DWORD, OutStr:DWORD, x:DWORD, y:DWORD

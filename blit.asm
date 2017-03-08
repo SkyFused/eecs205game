@@ -14,6 +14,11 @@ include stars.inc
 include lines.inc
 include trig.inc
 include blit.inc
+include game.inc
+
+;; Library Includes
+include \masm32\include\user32.inc
+includelib \masm32\lib\user32.lib
 
 
 .DATA
@@ -85,6 +90,17 @@ outer_eval_rect:
 
   ret
 DrawRect ENDP
+
+VarToStr PROC Arg:DWORD, FormatStr:DWORD, OutStr:DWORD, x:DWORD, y:DWORD
+  push Arg
+  push FormatStr
+  push OutStr
+  call wsprintf
+  add esp, 12
+  INVOKE DrawStr, OutStr, x, y, 0ffh
+
+  ret
+VarToStr ENDP
 
 BasicBlit PROC USES ebx ecx edx edi esi ptrBitmap:PTR EECS205BITMAP , xcenter:DWORD, ycenter:DWORD
 ; Draw a bitmap of dwWidth and dwHeight centered at [xcenter, ycenter]

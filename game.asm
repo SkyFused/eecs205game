@@ -19,9 +19,10 @@ include game.inc
 ;; Keycodes
 include keys.inc
 
-;; Screen Printing Includes
+;; Library Includes
 include \masm32\include\user32.inc
 includelib \masm32\lib\user32.lib
+
 
 .DATA
 ;; Debugging strings
@@ -30,6 +31,8 @@ no_collision_str BYTE "No Collision Detected", 0
 mouse_str        BYTE "Mouse Pressed", 0
 p1_fire_str      BYTE "P1 fired!", 0
 p2_fire_str      BYTE "P2 fired!", 0
+tank_pos_str     BYTE "x: %d", 0
+tank_pos_out     BYTE 128 DUP (0)
 
 ;; Game info strings
 paused_msg       BYTE "Game Paused", 0
@@ -170,7 +173,7 @@ CheckIntersect ENDP
 ;; Like Unity Start() func, runs once at startup
 GameInit PROC
 
-  ;; Initialize P1 at (100,380)
+  ;; Initialize P1 at (50,380)
   mov Player1.bitmap, OFFSET P1TANK
   mov eax, 100
   shl eax, 16
@@ -189,10 +192,10 @@ GameInit PROC
   mov Player1.accY, eax
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ;; Initialize P2 at (500, 380)
+  ;; Initialize P2 at (550, 380)
   mov Player2.bitmap, OFFSET P2TANK
 
-  mov eax, 500
+  mov eax, 550
   shl eax, 16
   mov Player2.posX, eax
 
@@ -282,7 +285,10 @@ draw_game:
   sar ecx, 16
 
   ;; Draw Player1
+  push ebx
   INVOKE BasicBlit, Player1.bitmap, ebx, ecx
+  pop ebx
+  INVOKE VarToStr, ebx, OFFSET tank_pos_str, OFFSET tank_pos_out, ebx, 350
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; Do a physics on Player2 and then draw it
