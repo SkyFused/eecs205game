@@ -72,11 +72,10 @@ ClearScreen PROC USES eax ebx
   mov ebx, ScreenBitsPtr
   add ebx, 307199
   mov ScreenBitsEnd, ebx
-  xor ebx, ebx
 
   clearLoop:
-  ;; Write the black color byte to the whole screen
-  mov (BYTE PTR [eax]), bl
+  ;; Write the color byte to the whole screen
+  mov (BYTE PTR [eax]), 001h
   inc eax
 
   ;; 640 * 480 = 307,200 - 1 for zero index
