@@ -60,12 +60,14 @@ ml /I%MASMINCPATH% /c  /coff  /Cp game.asm
 if %errorlevel% neq 0 goto :error
 
 
-link /SUBSYSTEM:WINDOWS  /LIBPATH:%MASMLIBPATH% game.obj blit.obj sprites.obj trig.obj lines.obj stars.obj libgame.obj
+link /SUBSYSTEM:WINDOWS  /LIBPATH:%MASMLIBPATH% game.obj sprites.obj blit.obj trig.obj lines.obj stars.obj libgame.obj
 
 if %errorlevel% neq 0 goto :error
 
 
-	echo Executable built succesfully.
+echo Executable built successfully.
+
+game.exe
 
 goto :EOF
 

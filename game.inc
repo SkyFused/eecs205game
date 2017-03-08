@@ -18,17 +18,20 @@ ProjStruct STRUCT
   ;; bitmap to use for this object
   bitmap DWORD ?
 
+  ;; boolean to track if active (render and do physX)
+  is_active DWORD ?
+
   ;; Position of obj on screen
-  posX   FXPT ?
-  posY   FXPT ?
+  posX   FXPT 0
+  posY   FXPT 0
 
   ;; Velocity of obj
-  velX   FXPT ?
-  velY   FXPT ?
+  velX   FXPT 0
+  velY   FXPT 0
 
   ;; Acceleration of obj
-  accX   FXPT ?
-  accY   FXPT ?
+  accX   FXPT 0
+  accY   FXPT 0
 
   ;; Damage this projectile deals
   dmg DWORD ?
@@ -49,16 +52,16 @@ PlayerStruct STRUCT
   is_turn BYTE ?
 
   ;; Position of player on screen
-  posX   FXPT ?
-  posY   FXPT ?
+  posX   FXPT 0
+  posY   FXPT 0
 
   ;; Velocity of player
-  velX   FXPT ?
-  velY   FXPT ?
+  velX   FXPT 0
+  velY   FXPT 0
 
   ;; Acceleration of player
-  accX   FXPT ?
-  accY   FXPT ?
+  accX   FXPT 0
+  accY   FXPT 0
 PlayerStruct ENDS
 
 BULLET TYPEDEF ProjStruct
@@ -85,6 +88,9 @@ EXTERNDEF KeyPress:DWORD
 ;; sprites
 EXTERNDEF P1TANK:EECS205BITMAP
 EXTERNDEF P2TANK:EECS205BITMAP
+EXTERNDEF SHOT_01:EECS205BITMAP
+EXTERNDEF SHOT_02:EECS205BITMAP
+EXTERNDEF SHOT_03:EECS205BITMAP
 EXTERNDEF StarBitmap:EECS205BITMAP
 
 ;; User Defined Functions

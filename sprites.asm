@@ -1,14 +1,14 @@
 ; #########################################################################
 ;
-;   sprites.asm - Assembly file for EECS205 Assignment 4/5
+;   sprites.asm - Assembly file for EECS205 Assignment 5
 ;   Mateusz Ryczek - mrr958
 ;
 ; #########################################################################
 
-      .586
-      .MODEL FLAT,STDCALL
-      .STACK 4096
-      option casemap :none
+.586
+.MODEL FLAT,STDCALL
+.STACK 4096
+option casemap :none
 
 include stars.inc
 include lines.inc
@@ -267,6 +267,24 @@ P1TANK EECS205BITMAP <50, 38, 06dh,, offset P1TANK + sizeof P1TANK>
 	BYTE 06dh,049h,024h,024h,024h,024h,024h,024h,024h,024h,024h,049h,06dh,06dh,06dh,06dh
 	BYTE 06dh,06dh,06dh,06dh,06dh,06dh,06dh,06dh,024h,048h,06dh,049h,048h,06dh,06dh,06dh
 	BYTE 049h,024h,048h,06dh,049h,024h,024h,06dh,06dh,06dh,06dh,06dh
+
+SHOT_01 EECS205BITMAP <8, 8, 0ffh,, offset SHOT_01 + sizeof SHOT_01>
+	BYTE 0ffh,0b6h,084h,0c8h,0a8h,040h,0b2h,0ffh,0b6h,0cdh,0e8h,0ech,0ech,0c8h,0adh,0b6h
+	BYTE 084h,0e8h,0f1h,0fah,0f4h,0f0h,0c8h,064h,0c8h,0ech,0fah,0ffh,0f8h,0f4h,0cch,0adh
+	BYTE 0a8h,0ech,0f4h,0f8h,0f8h,0f4h,0cch,0adh,040h,0c8h,0f0h,0f4h,0f4h,0f0h,0c8h,064h
+	BYTE 0b6h,0adh,0c8h,0cch,0cch,0c8h,0adh,0b6h,0ffh,0b6h,064h,0adh,0adh,064h,0b6h,0ffh
+
+SHOT_02 EECS205BITMAP <8, 8, 255,, offset SHOT_02 + sizeof SHOT_02>
+	BYTE 0ffh,0b6h,080h,0c9h,0a9h,060h,0b2h,0ffh,0b6h,0cdh,0e1h,0e5h,0e9h,0c5h,0adh,0b6h
+	BYTE 080h,0e1h,0eeh,0f6h,0f2h,0eah,0c5h,064h,0c9h,0e5h,0f6h,0ffh,0f7h,0eeh,0e9h,0a9h
+	BYTE 0a9h,0e9h,0f2h,0f7h,0f7h,0eeh,0e9h,0a9h,060h,0c5h,0eah,0eeh,0eeh,0eah,0c5h,064h
+	BYTE 0b2h,0adh,0c5h,0e9h,0e9h,0c5h,0a9h,0b6h,0ffh,0b6h,060h,0a9h,0a9h,064h,0b6h,0ffh
+
+SHOT_03 EECS205BITMAP <8, 8, 255,, offset SHOT_03 + sizeof SHOT_03>
+	BYTE 0ffh,0d6h,0a8h,0d1h,0cdh,064h,0b6h,0ffh,0d6h,0d1h,0f1h,0f5h,0f5h,0d1h,0cdh,0b6h
+	BYTE 0a8h,0f1h,0fah,0feh,0feh,0fah,0d1h,088h,0d1h,0f5h,0feh,0ffh,0ffh,0feh,0f5h,0adh
+	BYTE 0cdh,0f5h,0feh,0ffh,0ffh,0feh,0f5h,0adh,064h,0d1h,0fah,0feh,0feh,0fah,0d1h,068h
+	BYTE 0b6h,0cdh,0d1h,0f5h,0f5h,0d1h,0cdh,0b6h,0ffh,0b6h,088h,0adh,0adh,068h,0b6h,0ffh
 
 .CODE
 

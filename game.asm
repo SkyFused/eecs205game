@@ -54,6 +54,7 @@ includelib \masm32\lib\user32.lib
   ;; Sprite struct declarations
   Player1 PLAYER< >
   Player2 PLAYER< >
+  TestShot BULLET< >
 
   ;; Collision helper vars
   xCollide DWORD 0
@@ -191,14 +192,6 @@ GameInit PROC
   shl eax, 16
   mov Player1.posY, eax
 
-  ;; Set vel and acc'l to 0
-  xor eax, eax
-
-  mov Player1.velX, eax
-  mov Player1.velY, eax
-  mov Player1.accX, eax
-  mov Player1.accY, eax
-
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; Initialize P2 at (550, 380)
   mov Player2.bitmap, OFFSET P2TANK
@@ -211,13 +204,14 @@ GameInit PROC
   shl eax, 16
   mov Player2.posY, eax
 
-  ;; Set vel and acc'l to 0
-  xor eax, eax
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;; Initialize a projectile at (300, 300)
+  mov TestShot.bitmap, OFFSET SHOT_01
+  mov eax, 300
+  shl eax, 16
 
-  mov Player2.velX, eax
-  mov Player2.velY, eax
-  mov Player2.accX, eax
-  mov Player2.accY, eax
+  mov TestShot.posX, eax
+  mov TestShot.posY, eax
 
   ;; Make sure game is not paused on startup
   mov paused_state, 0
@@ -300,11 +294,7 @@ GamePlay PROC
   sar ecx, 16
 
   ;; Draw Player1
-  push ebx
   INVOKE BasicBlit, Player1.bitmap, ebx, ecx
-  pop ebx
-  INVOKE VarToStr, ebx, OFFSET tank_pos_str, OFFSET tank_pos_out, ebx, 350
-
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; Do a physics on Player2 and then draw it
   mov eax, Player2.accX
@@ -330,6 +320,15 @@ GamePlay PROC
   INVOKE BasicBlit, Player2.bitmap, ebx, ecx
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;; Render projectile
+  mov ebx, TestShot.posX
+  sar ebx, 16
+
+  mov ecx, TestShot.posY
+  sar ecx, 16
+  INVOKE BasicBlit, TestShot.bitmap, ebx, ecx
+
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; Check if the 2 sprites intersect. Shift from FXPT to DWORD
   mov eax, Player1.posX
   sar eax, 16
@@ -342,7 +341,7 @@ GamePlay PROC
 
   mov edx, Player2.posY
   sar edx, 16
-  
+
   INVOKE CheckIntersect, eax, ebx, Player1.bitmap, ecx, edx, Player2.bitmap
 
   ;; See what CheckIntersect returned, and notify on-screen accordingly
