@@ -55,6 +55,9 @@ includelib \masm32\lib\user32.lib
   Player1 PLAYER< >
   Player2 PLAYER< >
   TestShot BULLET< >
+  WALL1 OBJECT< >
+  WALL2 OBJECT< >
+  WALL3 OBJECT< >
 
   ;; Collision helper vars
   xCollide DWORD 0
@@ -207,12 +210,54 @@ GameInit PROC
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; Initialize a projectile at (300, 300)
   mov TestShot.bitmap, OFFSET SHOT_01
-  mov eax, 300
+  mov eax, 50
   shl eax, 16
-
   mov TestShot.posX, eax
+
+  mov eax, 380
+  shl eax, 16
   mov TestShot.posY, eax
 
+  mov eax, 10
+  shl eax, 16
+  mov TestShot.velX, eax
+
+  mov eax, 1
+  shl eax, 16
+  mov TestShot.velY, eax
+
+  mov TestShot.is_active, 1
+
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;; Initialize 3 wall objects on top of each other, in the middle
+  mov WALL1.bitmap, OFFSET WALL
+  mov WALL2.bitmap, OFFSET WALL
+  mov WALL3.bitmap, OFFSET WALL
+
+  mov WALL1.is_active, 1
+  mov WALL2.is_active, 1
+  mov WALL3.is_active, 1
+
+  mov eax, 320
+  shl eax, 16
+
+  mov WALL1.posX, eax
+  mov WALL2.posX, eax
+  mov WALL3.posX, eax
+
+  mov eax, 384
+  shl eax, 16
+  mov WALL1.posY, eax
+
+  mov eax, 352
+  shl eax, 16
+  mov WALL2.posY, eax
+
+  mov eax, 320
+  shl eax, 16
+  mov WALL3.posY, eax
+
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; Make sure game is not paused on startup
   mov paused_state, 0
 
@@ -265,6 +310,38 @@ GamePlay PROC
   INVOKE DrawStarField
   INVOKE DrawRect, 0, 400, 639, 479, 0ffh
 
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;; Draw walls if active
+  cmp WALL1.is_active, 1
+  jne wall2_render
+
+  mov eax, WALL1.posX
+  sar eax, 16
+  mov ebx, WALL1.posY
+  sar ebx, 16
+  INVOKE BasicBlit, WALL1.bitmap, eax, ebx
+
+  wall2_render:
+  cmp WALL2.is_active, 1
+  jne wall3_render
+
+  mov eax, WALL2.posX
+  sar eax, 16
+  mov ebx, WALL2.posY
+  sar ebx, 16
+  INVOKE BasicBlit, WALL2.bitmap, eax, ebx
+
+  wall3_render:
+  cmp WALL3.is_active, 1
+  jne no_wall
+
+  mov eax, WALL3.posX
+  sar eax, 16
+  mov ebx, WALL3.posY
+  sar ebx, 16
+  INVOKE BasicBlit, WALL3.bitmap, eax, ebx
+
+  no_wall:
   ;; Draw the player stats
   INVOKE VarToStr, Player1.health, OFFSET health_str, OFFSET health_out, 5, 100
   INVOKE VarToStr, Player2.health, OFFSET health_str, OFFSET health_out, 570, 100
@@ -320,7 +397,21 @@ GamePlay PROC
   INVOKE BasicBlit, Player2.bitmap, ebx, ecx
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ;; Render projectile
+  ;; Render and do physX if projectile active
+  cmp TestShot.is_active, 1
+  jne skip_proj
+
+  mov eax, TestShot.accY
+  add TestShot.velY, eax
+
+  ;; Move the bullet
+  mov eax, TestShot.velX
+  add TestShot.posX, eax
+
+  mov eax, TestShot.velY
+  sub TestShot.posY, eax
+
+  ;; Shift position and render bullet
   mov ebx, TestShot.posX
   sar ebx, 16
 
@@ -328,36 +419,10 @@ GamePlay PROC
   sar ecx, 16
   INVOKE BasicBlit, TestShot.bitmap, ebx, ecx
 
+  skip_proj:
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ;; Check if the 2 sprites intersect. Shift from FXPT to DWORD
-  mov eax, Player1.posX
-  sar eax, 16
+  ;; Check if the projectile intersects with anything.Shift from FXPT to DWORD
 
-  mov ebx, Player1.posY
-  sar ebx, 16
-
-  mov ecx, Player2.posX
-  sar ecx, 16
-
-  mov edx, Player2.posY
-  sar edx, 16
-
-  INVOKE CheckIntersect, eax, ebx, Player1.bitmap, ecx, edx, Player2.bitmap
-
-  ;; See what CheckIntersect returned, and notify on-screen accordingly
-  ;; 0 means no collision
-  ;; 1 means collision
-  cmp eax, 0
-  je print_no_collision
-
-  ;; fell through so there was a collision, print that
-  INVOKE DrawStr, OFFSET collision_str, 300, 300, 0ffh
-  jmp away
-
-  print_no_collision:
-  INVOKE DrawStr, OFFSET no_collision_str, 300, 300, 0ffh
-
-  away:
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; Check if D key was pressed. If yes move right, else brake
   mov eax, KeyPress

@@ -286,6 +286,72 @@ SHOT_03 EECS205BITMAP <8, 8, 255,, offset SHOT_03 + sizeof SHOT_03>
 	BYTE 0cdh,0f5h,0feh,0ffh,0ffh,0feh,0f5h,0adh,064h,0d1h,0fah,0feh,0feh,0fah,0d1h,068h
 	BYTE 0b6h,0cdh,0d1h,0f5h,0f5h,0d1h,0cdh,0b6h,0ffh,0b6h,088h,0adh,0adh,068h,0b6h,0ffh
 
+WALL EECS205BITMAP <32, 32, 255,, offset WALL + sizeof WALL>
+	BYTE 005h,005h,005h,005h,005h,009h,009h,009h,005h,005h,005h,009h,009h,009h,009h,005h
+	BYTE 005h,005h,009h,009h,009h,009h,005h,005h,005h,009h,009h,009h,005h,005h,005h,005h
+	BYTE 005h,009h,02eh,02eh,02eh,04eh,04eh,04eh,04eh,02eh,02eh,04eh,04eh,04eh,04eh,04eh
+	BYTE 02eh,02eh,04eh,04eh,04eh,04eh,04eh,02eh,02eh,04eh,04eh,04eh,04eh,02eh,02eh,02eh
+	BYTE 005h,009h,02eh,02eh,02eh,04fh,04fh,04fh,04eh,02eh,02eh,04fh,04fh,04fh,04fh,04eh
+	BYTE 02eh,02eh,04fh,04fh,04fh,04fh,04eh,02eh,02eh,04fh,04fh,04fh,04eh,02eh,02eh,02eh
+	BYTE 005h,009h,02eh,02eh,02eh,02eh,02eh,02eh,02eh,02eh,02eh,02eh,02eh,02eh,02eh,02eh
+	BYTE 02eh,02eh,02eh,02eh,02eh,02eh,02eh,02eh,02eh,02eh,02eh,02eh,02eh,02eh,02eh,02eh
+	BYTE 005h,009h,02eh,02eh,02eh,02eh,02eh,02eh,02eh,02eh,02eh,02eh,02eh,02eh,02eh,02eh
+	BYTE 02eh,02eh,02eh,02eh,02eh,02eh,02eh,02eh,02eh,02eh,02eh,02eh,02eh,02eh,02eh,02eh
+	BYTE 005h,009h,02eh,04eh,02eh,02eh,02eh,02eh,02eh,04eh,02eh,02eh,02eh,02eh,02eh,02eh
+	BYTE 04eh,02eh,02eh,02eh,02eh,02eh,02eh,04eh,02eh,02eh,02eh,02eh,02eh,04eh,02eh,02eh
+	BYTE 005h,009h,02eh,04eh,02eh,02eh,02eh,02eh,02eh,04eh,02eh,02eh,02eh,02eh,02eh,02eh
+	BYTE 04eh,02eh,02eh,02eh,02eh,02eh,02eh,04eh,02eh,02eh,02eh,02eh,02eh,04eh,02eh,02eh
+	BYTE 005h,009h,02eh,04eh,02eh,02eh,02eh,02eh,02eh,04eh,02eh,02eh,02eh,02eh,02eh,02eh
+	BYTE 04eh,02eh,02eh,02eh,02eh,02eh,02eh,04eh,02eh,02eh,02eh,02eh,02eh,04eh,02eh,02eh
+	BYTE 005h,009h,02eh,04eh,02eh,02eh,02eh,02eh,02eh,04eh,02eh,02eh,02eh,02eh,02eh,02eh
+	BYTE 04eh,02eh,02eh,02eh,02eh,02eh,02eh,04eh,02eh,02eh,02eh,02eh,02eh,04eh,02eh,02eh
+	BYTE 005h,009h,02eh,04eh,02eh,02eh,02eh,02eh,02eh,04eh,02eh,02eh,02eh,02eh,02eh,02eh
+	BYTE 04eh,02eh,02eh,02eh,02eh,02eh,02eh,04eh,02eh,02eh,02eh,02eh,02eh,04eh,02eh,02eh
+	BYTE 005h,009h,02eh,04eh,02eh,02eh,02eh,02eh,02eh,04eh,02eh,02eh,02eh,02eh,02eh,02eh
+	BYTE 04eh,02eh,02eh,02eh,02eh,02eh,02eh,04eh,02eh,02eh,02eh,02eh,02eh,04eh,02eh,02eh
+	BYTE 005h,009h,02eh,04eh,02eh,02eh,02eh,02eh,02eh,04eh,02eh,02eh,02eh,02eh,02eh,02eh
+	BYTE 04eh,02eh,02eh,02eh,02eh,02eh,02eh,04eh,02eh,02eh,02eh,02eh,02eh,04eh,02eh,02eh
+	BYTE 005h,009h,02eh,04eh,02eh,02eh,02eh,02eh,02eh,02eh,02eh,02eh,02eh,02eh,02eh,02eh
+	BYTE 04eh,02eh,02eh,02eh,02eh,02eh,02eh,02eh,02eh,02eh,02eh,02eh,02eh,04eh,02eh,02eh
+	BYTE 005h,009h,02eh,04eh,02eh,02eh,02eh,02eh,02eh,04eh,02eh,02eh,02eh,02eh,02eh,02eh
+	BYTE 04eh,02eh,02eh,02eh,02eh,02eh,02eh,04eh,02eh,02eh,02eh,02eh,02eh,04eh,02eh,02eh
+	BYTE 005h,009h,02eh,02eh,02eh,02ah,005h,02ah,04fh,04fh,04fh,04fh,04fh,04eh,02eh,02eh
+	BYTE 04eh,02eh,02eh,02eh,02ah,005h,02ah,04fh,04fh,04fh,04fh,04fh,04eh,04eh,02eh,02eh
+	BYTE 005h,009h,02eh,02eh,02eh,02ah,005h,02ah,04fh,04fh,04fh,04fh,053h,04eh,02eh,02eh
+	BYTE 04eh,02eh,02eh,02eh,02ah,005h,029h,04fh,04fh,04fh,04fh,053h,04eh,04eh,02eh,02eh
+	BYTE 005h,009h,02eh,02eh,02eh,02ah,005h,02ah,053h,053h,053h,053h,053h,04eh,02eh,02eh
+	BYTE 04eh,02eh,02eh,02eh,02ah,005h,02ah,053h,053h,053h,053h,053h,04eh,04eh,02eh,02eh
+	BYTE 005h,009h,02eh,02eh,02eh,02ah,005h,02ah,04eh,04eh,04eh,04eh,04fh,04eh,02eh,02eh
+	BYTE 04eh,02eh,02eh,02eh,02ah,005h,029h,04eh,04eh,04eh,04eh,04fh,04eh,04eh,02eh,02eh
+	BYTE 005h,009h,02eh,02eh,02eh,02ah,005h,005h,005h,005h,005h,029h,02eh,02eh,02eh,02eh
+	BYTE 04eh,02eh,02eh,02eh,02ah,005h,005h,005h,005h,005h,029h,02eh,02eh,04eh,02eh,02eh
+	BYTE 005h,009h,02eh,02eh,02eh,02ah,005h,005h,005h,005h,005h,009h,02eh,02eh,02eh,02eh
+	BYTE 04eh,02eh,02eh,02eh,02ah,005h,005h,005h,005h,005h,009h,02eh,02eh,04eh,02eh,02eh
+	BYTE 005h,009h,02eh,04eh,02eh,02eh,02eh,02eh,02eh,02eh,02eh,02eh,02eh,02eh,02eh,02eh
+	BYTE 04eh,02eh,02eh,02eh,02eh,02eh,02eh,02eh,02eh,02eh,02eh,02eh,02eh,04eh,02eh,02eh
+	BYTE 005h,009h,02eh,04eh,02eh,02eh,02eh,02eh,02eh,04eh,02eh,02eh,02eh,02eh,02eh,02eh
+	BYTE 04eh,02eh,02eh,02eh,02eh,02eh,02eh,04eh,02eh,02eh,02eh,02eh,02eh,04eh,02eh,02eh
+	BYTE 005h,009h,02eh,04eh,02eh,02eh,02eh,02eh,02eh,02eh,02eh,02eh,02eh,02eh,02eh,02eh
+	BYTE 04eh,02eh,02eh,02eh,02eh,02eh,02eh,02eh,02eh,02eh,02eh,02eh,02eh,04eh,02eh,02eh
+	BYTE 005h,009h,02eh,04eh,02eh,02eh,02eh,02eh,02eh,04eh,02eh,02eh,02eh,02eh,02eh,02eh
+	BYTE 04eh,02eh,02eh,02eh,02eh,02eh,02eh,04eh,02eh,02eh,02eh,02eh,02eh,04eh,02eh,02eh
+	BYTE 005h,009h,02eh,04eh,02eh,02eh,02eh,02eh,02eh,04eh,02eh,02eh,02eh,02eh,02eh,02eh
+	BYTE 04eh,02eh,02eh,02eh,02eh,02eh,02eh,04eh,02eh,02eh,02eh,02eh,02eh,04eh,02eh,02eh
+	BYTE 005h,009h,02eh,04eh,02eh,02eh,02eh,02eh,02eh,04eh,02eh,02eh,02eh,02eh,02eh,02eh
+	BYTE 04eh,02eh,02eh,02eh,02eh,02eh,02eh,04eh,02eh,02eh,02eh,02eh,02eh,04eh,02eh,02eh
+	BYTE 005h,009h,02eh,04eh,02eh,02eh,02eh,02eh,02eh,04eh,02eh,02eh,02eh,02eh,02eh,02eh
+	BYTE 04eh,02eh,02eh,02eh,02eh,02eh,02eh,04eh,02eh,02eh,02eh,02eh,02eh,04eh,02eh,02eh
+	BYTE 005h,009h,02eh,02eh,02eh,02eh,02eh,02eh,02eh,02eh,02eh,02eh,02eh,02eh,02eh,02eh
+	BYTE 02eh,02eh,02eh,02eh,02eh,02eh,02eh,02eh,02eh,02eh,02eh,02eh,02eh,02eh,02eh,02eh
+	BYTE 005h,009h,02eh,02eh,02eh,02eh,02eh,02eh,02eh,02eh,02eh,02eh,02eh,02eh,02eh,02eh
+	BYTE 02eh,02eh,02eh,02eh,02eh,02eh,02eh,02eh,02eh,02eh,02eh,02eh,02eh,02eh,02eh,02eh
+	BYTE 005h,009h,02eh,02eh,02ah,005h,005h,005h,009h,02eh,02ah,005h,005h,005h,005h,009h
+	BYTE 02eh,02ah,005h,005h,005h,005h,009h,02eh,02ah,005h,005h,005h,009h,02eh,02eh,02eh
+	BYTE 005h,009h,02eh,02eh,02ah,005h,005h,005h,009h,02eh,02ah,005h,005h,005h,005h,009h
+	BYTE 02eh,02ah,005h,005h,005h,005h,005h,02eh,02ah,005h,005h,005h,009h,02eh,02eh,02eh
+	BYTE 005h,005h,005h,005h,005h,005h,005h,005h,005h,005h,005h,005h,005h,005h,005h,005h
+	BYTE 005h,005h,005h,005h,005h,005h,005h,005h,005h,005h,005h,005h,005h,005h,005h,009h
+
 .CODE
 
 END
