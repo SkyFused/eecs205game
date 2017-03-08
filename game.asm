@@ -1,14 +1,14 @@
 ; #########################################################################
 ;
-;   game.asm - Assembly file for EECS205 Assignment 4/5
+;   game.asm - Assembly file for EECS205 Assignment 5
 ;   Mateusz Ryczek - mrr958
 ;
 ; #########################################################################
 
-      .586
-      .MODEL FLAT,STDCALL
-      .STACK 4096
-      option casemap :none
+.586
+.MODEL FLAT,STDCALL
+.STACK 4096
+option casemap :none
 
 include stars.inc
 include lines.inc
@@ -25,31 +25,33 @@ includelib \masm32\lib\user32.lib
 
 
 .DATA
-;; Debugging strings
-collision_str    BYTE "Collision Detected", 0
-no_collision_str BYTE "No Collision Detected", 0
-mouse_str        BYTE "Mouse Pressed", 0
-p1_fire_str      BYTE "P1 fired!", 0
-p2_fire_str      BYTE "P2 fired!", 0
-tank_pos_str     BYTE "x: %d", 0
-tank_pos_out     BYTE 128 DUP (0)
+  ;; Debugging strings
+  collision_str    BYTE "Collision Detected", 0
+  no_collision_str BYTE "No Collision Detected", 0
+  mouse_str        BYTE "Mouse Pressed", 0
+  p1_fire_str      BYTE "P1 fired!", 0
+  p2_fire_str      BYTE "P2 fired!", 0
+  tank_pos_str     BYTE "x: %d", 0
+  tank_pos_out     BYTE 128 DUP (0)
 
-;; Game info strings
-paused_msg       BYTE "Game Paused", 0
-unpause_msg      BYTE "Press tab to resume!", 0
+  ;; Game info strings
+  paused_msg       BYTE "Game Paused", 0
+  unpause_msg      BYTE "Press tab to resume!", 0
 
-;; Game state vars
-paused_state   DWORD 0
-tabloop_active DWORD 0
-tabinit_active DWORD 0
+  ;; Game state vars
+  paused_state   DWORD 0
+  tabloop_active DWORD 0
+  tabinit_active DWORD 0
+  MaxVelo        DWORD 5
+  MaxVeloNeg     DWORD -5
 
-;; Sprite struct declarations
-Player1 OBJECT< >
-Player2 OBJECT< >
+  ;; Sprite struct declarations
+  Player1 OBJECT< >
+  Player2 OBJECT< >
 
-;; Collision helper vars
-xCollide DWORD 0
-yCollide DWORD 0
+  ;; Collision helper vars
+  xCollide DWORD 0
+  yCollide DWORD 0
 
 .CODE
 
@@ -66,7 +68,7 @@ ClearScreen PROC USES eax ebx
   mov ScreenBitsEnd, ebx
   xor ebx, ebx
 
-clearLoop:
+  clearLoop:
   ;; Write the black color byte to the whole screen
   mov (BYTE PTR [eax]), bl
   inc eax
@@ -79,8 +81,9 @@ clearLoop:
   ret
 ClearScreen ENDP
 
-CheckIntersect PROC USES ebx oneX:DWORD, oneY:DWORD, oneBitmap:PTR EECS205BITMAP,
-twoX:DWORD, twoY:DWORD, twoBitmap:PTR EECS205BITMAP
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Imaginary Motor 4® (Collision Detection)
+CheckIntersect PROC USES ebx oneX:DWORD, oneY:DWORD, oneBitmap:PTR EECS205BITMAP, twoX:DWORD, twoY:DWORD, twoBitmap:PTR EECS205BITMAP
   ;; More comparisons than a 5th grader telling yo momma jokes
   ;;
   ;; return (((x.width / 2) + (y.width / 2)) < (abs (x1 - x2)) &&
@@ -129,7 +132,7 @@ twoX:DWORD, twoY:DWORD, twoBitmap:PTR EECS205BITMAP
   ;; fell through; compute abs(ebx)
   neg ebx
 
-eval_x_axis:
+  eval_x_axis:
   cmp eax, ebx
   jl compute_y_axis
 
@@ -137,7 +140,7 @@ eval_x_axis:
   ;; Set the flag and check y-axis
   mov xCollide, 1
 
-compute_y_axis:
+  compute_y_axis:
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; Compute y-axis intersection
   mov eax, oneHalfHeight
@@ -151,7 +154,7 @@ compute_y_axis:
   ;; fell through; compute abs(ebx)
   neg ebx
 
-eval_y_axis:
+  eval_y_axis:
   cmp eax, ebx
   jl compute_intersect
 
@@ -159,7 +162,7 @@ eval_y_axis:
   ;; Set the flag and cross check with x-axis
   mov yCollide, 1
 
-compute_intersect:
+  compute_intersect:
   mov eax, xCollide
   mov ebx, yCollide
   and eax, ebx
@@ -235,7 +238,7 @@ GamePlay PROC
   jne draw_game
 
   ;; The game is paused. Draw it and check TAB keypress
-draw_paused:
+  draw_paused:
   INVOKE DrawPauseField
   INVOKE DrawStr, OFFSET paused_msg, 280, 220, 0ffh
   INVOKE DrawStr, OFFSET unpause_msg, 240, 240, 0ffh
@@ -248,7 +251,7 @@ draw_paused:
   mov tabinit_active, 1
 
   ;; TAB is being pressed, wait for it to be released
-TABINIT:
+  TABINIT:
   cmp KeyPress, 0
   jne FrameComplete
 
@@ -257,7 +260,7 @@ TABINIT:
   mov paused_state, 0
   jmp FrameComplete
 
-draw_game:
+  draw_game:
   ;; Draw the background
   INVOKE DrawStarField
   INVOKE DrawRect, 0, 400, 639, 479, 0ffh
@@ -333,10 +336,10 @@ draw_game:
   INVOKE DrawStr, OFFSET collision_str, 300, 300, 0ffh
   jmp away
 
-print_no_collision:
+  print_no_collision:
   INVOKE DrawStr, OFFSET no_collision_str, 300, 300, 0ffh
 
-away:
+  away:
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; Check if D key was pressed. If yes move right, else brake
   mov eax, KeyPress
@@ -344,13 +347,13 @@ away:
   jne DNotPressed
 
   ;; Set velocity
-  mov eax, 10
+  mov eax, MaxVelo
   sal eax, 16
   mov Player1.velX, eax
   jmp FrameComplete
 
   ;; Stop moving if the key was not pressed
-DNotPressed:
+  DNotPressed:
   mov eax, 0
   sal eax, 16
   mov Player1.velX, eax
@@ -362,13 +365,13 @@ DNotPressed:
   jne ANotPressed
 
   ;; Set velocity
-  mov eax, -10
+  mov eax, MaxVeloNeg
   shl eax, 16
   mov Player1.velX, eax
   jmp FrameComplete
 
   ;; Stop moving if the key was not pressed
-ANotPressed:
+  ANotPressed:
   mov eax, 0
   sal eax, 16
   mov Player1.velX, eax
@@ -380,13 +383,13 @@ ANotPressed:
   jne LeftNotPressed
 
   ;; Set velocity
-  mov eax, -10
+  mov eax, MaxVeloNeg
   shl eax, 16
   mov Player2.velX, eax
   jmp FrameComplete
 
   ;; Stop moving if the key was not pressed
-LeftNotPressed:
+  LeftNotPressed:
   mov eax, 0
   sal eax, 16
   mov Player2.velX, eax
@@ -398,13 +401,13 @@ LeftNotPressed:
   jne RightNotPressed
 
   ;; Set velocity
-  mov eax, 10
+  mov eax, MaxVelo
   shl eax, 16
   mov Player2.velX, eax
   jmp FrameComplete
 
   ;; Stop moving if the key was not pressed
-RightNotPressed:
+  RightNotPressed:
   mov eax, 0
   sal eax, 16
   mov Player2.velX, eax
@@ -418,7 +421,7 @@ RightNotPressed:
   ;; Do firing stuff
   INVOKE DrawStr, OFFSET p1_fire_str, 280, 220, 0ffh
 
-SNotPressed:
+  SNotPressed:
   ;; Continue
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -430,7 +433,7 @@ SNotPressed:
   ;; Do firing stuff
   INVOKE DrawStr, OFFSET p2_fire_str, 280, 220, 0ffh
 
-DownNotPressed:
+  DownNotPressed:
   ;; Continue
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -443,7 +446,7 @@ DownNotPressed:
   mov tabloop_active, 1
 
   ;; TAB is currently down, wait until it is released.
-TABLOOP:
+  TABLOOP:
   cmp KeyPress, 0
   jne FrameComplete
 
@@ -451,10 +454,9 @@ TABLOOP:
   mov tabloop_active, 0
   mov paused_state, 1
 
-;; We've finished doing something somewhere else, ret
-FrameComplete:
+  ;; We've finished doing something somewhere else, ret
+  FrameComplete:
   ret
-
 GamePlay ENDP
 
 END

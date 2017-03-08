@@ -1,14 +1,14 @@
 ; #########################################################################
 ;
-;   blit.asm - Assembly file for EECS205 Assignment 3
+;   blit.asm - Assembly file for EECS205 Assignment 5
 ;   mrr958 - Mateusz Ryczek
 ;
 ; #########################################################################
 
-      .586
-      .MODEL FLAT,STDCALL
-      .STACK 4096
-      option casemap :none  ; case sensitive
+.586
+.MODEL FLAT,STDCALL
+.STACK 4096
+option casemap :none  ; case sensitive
 
 include stars.inc
 include lines.inc
