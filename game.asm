@@ -16,7 +16,7 @@ include trig.inc
 include blit.inc
 include game.inc
 
-;; Has keycodes
+;; Keycodes
 include keys.inc
 
 ;; Screen Printing Includes
@@ -24,10 +24,14 @@ include \masm32\include\user32.inc
 includelib \masm32\lib\user32.lib
 
 .DATA
-;; Collision detection printing strings
+;; Debugging strings
 collision_str    BYTE "Collision Detected", 0
 no_collision_str BYTE "No Collision Detected", 0
 mouse_str        BYTE "Mouse Pressed", 0
+p1_fire_str      BYTE "P1 fired!", 0
+p2_fire_str      BYTE "P2 fired!", 0
+
+;; Game info strings
 paused_msg       BYTE "Game Paused", 0
 unpause_msg      BYTE "Press tab to resume!", 0
 
@@ -38,9 +42,9 @@ tabinit_active DWORD 0
 
 ;; Sprite struct declarations
 Player1 OBJECT< >
-Player2  OBJECT< >
+Player2 OBJECT< >
 
-;; Collision vars
+;; Collision helper vars
 xCollide DWORD 0
 yCollide DWORD 0
 
@@ -163,7 +167,9 @@ compute_intersect:
 CheckIntersect ENDP
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Like Unity Start() func, runs once at startup
 GameInit PROC
+
   ;; Initialize P1 at (100,380)
   mov Player1.bitmap, OFFSET P1TANK
   mov eax, 100
@@ -204,7 +210,6 @@ GameInit PROC
 
   ;; Make sure game is not paused on startup
   mov paused_state, 0
-  mov KeyPress, 0
 
 	ret
 GameInit ENDP
@@ -222,7 +227,7 @@ GamePlay PROC
   ;; Clear the screen on each runthrough to prevent artifacts
   INVOKE ClearScreen
 
-  ;; Check right away if game is paused. Only render pause screen if yes
+  ;; Check right away if game is paused. Only render pause screen if it is
   cmp paused_state, 1
   jne draw_game
 
@@ -235,18 +240,19 @@ draw_paused:
   ;; Now check if TAB is currently being pressed
   mov eax, KeyPress
   cmp eax, VK_TAB
-  jne GamePlayDone
+  jne FrameComplete
 
   mov tabinit_active, 1
+
   ;; TAB is being pressed, wait for it to be released
 TABINIT:
   cmp KeyPress, 0
-  jne GamePlayDone
+  jne FrameComplete
 
   ;; Fallthrough: TAB was released, reset pause state and ret
   mov tabinit_active, 0
   mov paused_state, 0
-  jmp GamePlayDone
+  jmp FrameComplete
 
 draw_game:
   ;; Draw the background
@@ -261,14 +267,14 @@ draw_game:
   mov eax, Player1.accY
   add Player1.velY, eax
 
-  ;; Move the sprite
+  ;; Move the player
   mov eax, Player1.velX
   add Player1.posX, eax
 
   mov eax, Player1.velY
   add Player1.posY, eax
 
-  ;; Shift positions from FXPT so that we can draw them
+  ;; Shift positions from FXPT so that we can draw sprite
   mov ebx, Player1.posX
   sar ebx, 16
 
@@ -278,12 +284,28 @@ draw_game:
   ;; Draw Player1
   INVOKE BasicBlit, Player1.bitmap, ebx, ecx
 
-  ;; Draw Player2
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;; Do a physics on Player2 and then draw it
+  mov eax, Player2.accX
+  add Player2.velX, eax
+
+  mov eax, Player2.accY
+  add Player2.velY, eax
+
+  ;; Move the player
+  mov eax, Player2.velX
+  add Player2.posX, eax
+
+  mov eax, Player2.velY
+  add Player2.posY, eax
+
+  ;; Shift positions from FXPT so that we can draw them
   mov ebx, Player2.posX
   sar ebx, 16
 
   mov ecx, Player2.posY
   sar ecx, 16
+
   INVOKE BasicBlit, Player2.bitmap, ebx, ecx
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -310,7 +332,7 @@ print_no_collision:
 
 away:
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ;; Check if D key was pressed. If yes move right, else fall through
+  ;; Check if D key was pressed. If yes move right, else brake
   mov eax, KeyPress
   cmp eax, VK_D
   jne DNotPressed
@@ -319,7 +341,7 @@ away:
   mov eax, 10
   sal eax, 16
   mov Player1.velX, eax
-  jmp GamePlayDone
+  jmp FrameComplete
 
   ;; Stop moving if the key was not pressed
 DNotPressed:
@@ -328,7 +350,7 @@ DNotPressed:
   mov Player1.velX, eax
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ;; Check if A key was pressed. If yes move left, else fall through
+  ;; Check if A key was pressed. If yes move left, else brake
   mov eax, KeyPress
   cmp eax, VK_A
   jne ANotPressed
@@ -337,7 +359,7 @@ DNotPressed:
   mov eax, -10
   shl eax, 16
   mov Player1.velX, eax
-  jmp GamePlayDone
+  jmp FrameComplete
 
   ;; Stop moving if the key was not pressed
 ANotPressed:
@@ -346,38 +368,85 @@ ANotPressed:
   mov Player1.velX, eax
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ;; Check if LMB was pressed. If yes move Player2 up, else ret
-  mov eax, MouseStatus.buttons
-  cmp eax, MK_LBUTTON
-  jne MouseNotPressed
+  ;; Check if left arrow was pressed. If yes move P2 left, else brake
+  mov eax, KeyPress
+  cmp eax, VK_LEFT
+  jne LeftNotPressed
 
-  ;; Move Player2
-  mov eax, -5
+  ;; Set velocity
+  mov eax, -10
   shl eax, 16
-  add Player2.posY,eax
-  INVOKE DrawStr, OFFSET mouse_str, 200, 400, 0ffh
+  mov Player2.velX, eax
+  jmp FrameComplete
 
-MouseNotPressed:
+  ;; Stop moving if the key was not pressed
+LeftNotPressed:
+  mov eax, 0
+  sal eax, 16
+  mov Player2.velX, eax
+
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;; Check if right arrow was pressed. If yes move P2 right, else brake
+  mov eax, KeyPress
+  cmp eax, VK_RIGHT
+  jne RightNotPressed
+
+  ;; Set velocity
+  mov eax, 10
+  shl eax, 16
+  mov Player2.velX, eax
+  jmp FrameComplete
+
+  ;; Stop moving if the key was not pressed
+RightNotPressed:
+  mov eax, 0
+  sal eax, 16
+  mov Player2.velX, eax
+
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;; Check if S was pressed. If yes fire P1 projectile
+  mov eax, KeyPress
+  cmp eax, VK_S
+  jne SNotPressed
+
+  ;; Do firing stuff
+  INVOKE DrawStr, OFFSET p1_fire_str, 280, 220, 0ffh
+
+SNotPressed:
+  ;; Continue
+
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;; Check if down arrow was pressed. If yes fire P2 projectile
+  mov eax, KeyPress
+  cmp eax, VK_DOWN
+  jne DownNotPressed
+
+  ;; Do firing stuff
+  INVOKE DrawStr, OFFSET p2_fire_str, 280, 220, 0ffh
+
+DownNotPressed:
+  ;; Continue
+
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; Check if TAB was pressed. If yes , wait for it to be released, then
   ;; set the paused_state bool.
   mov eax, KeyPress
   cmp eax, VK_TAB
-  jne GamePlayDone
+  jne FrameComplete
 
   mov tabloop_active, 1
 
   ;; TAB is currently down, wait until it is released.
 TABLOOP:
   cmp KeyPress, 0
-  jne GamePlayDone
+  jne FrameComplete
 
   ;; TAB was released, set state and RET
   mov tabloop_active, 0
   mov paused_state, 1
 
 ;; We've finished doing something somewhere else, ret
-GamePlayDone:
+FrameComplete:
   ret
 
 GamePlay ENDP
