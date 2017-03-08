@@ -330,12 +330,19 @@ GamePlay PROC
   INVOKE BasicBlit, Player2.bitmap, ebx, ecx
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ;; Check if the 2 sprites intersect
+  ;; Check if the 2 sprites intersect. Shift from FXPT to DWORD
   mov eax, Player1.posX
+  sar eax, 16
+
   mov ebx, Player1.posY
+  sar ebx, 16
 
   mov ecx, Player2.posX
+  sar ecx, 16
+
   mov edx, Player2.posY
+  sar edx, 16
+  
   INVOKE CheckIntersect, eax, ebx, Player1.bitmap, ecx, edx, Player2.bitmap
 
   ;; See what CheckIntersect returned, and notify on-screen accordingly
