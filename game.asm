@@ -54,10 +54,13 @@ includelib \masm32\lib\user32.lib
   ;; Sprite struct declarations
   Player1 PLAYER< >
   Player2 PLAYER< >
-  TestShot BULLET< >
+  P1Shot BULLET< >
+  P2Shot BULLET< >
   WALL1 OBJECT< >
   WALL2 OBJECT< >
   WALL3 OBJECT< >
+  P1AIM ROTSPRT< >
+  P2AIM ROTSPRT< >
 
   ;; Collision helper vars
   xCollide DWORD 0
@@ -65,7 +68,7 @@ includelib \masm32\lib\user32.lib
 
 .CODE
 
-;; Clear the screen
+;; Clear the screen (fill entire thing with dark blue)
 ClearScreen PROC USES eax ebx
 
   ;; Find end of screen
@@ -195,6 +198,9 @@ GameInit PROC
   shl eax, 16
   mov Player1.posY, eax
 
+  ;; P1 goes first
+  mov Player1.is_turn, 1
+
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; Initialize P2 at (550, 380)
   mov Player2.bitmap, OFFSET P2TANK
@@ -209,24 +215,24 @@ GameInit PROC
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; Initialize a projectile at (300, 300)
-  mov TestShot.bitmap, OFFSET SHOT_01
+  mov P1Shot.bitmap, OFFSET SHOT_01
   mov eax, 50
   shl eax, 16
-  mov TestShot.posX, eax
+  mov P1Shot.posX, eax
 
   mov eax, 380
   shl eax, 16
-  mov TestShot.posY, eax
+  mov P1Shot.posY, eax
 
-  mov eax, 10
-  shl eax, 16
-  mov TestShot.velX, eax
+  ;; mov eax, 10
+  ;; shl eax, 16
+  ;; mov P1Shot.velX, eax
+;;
+  ;; mov eax, 1
+  ;; shl eax, 16
+  ;; mov P1Shot.velY, eax
 
-  mov eax, 1
-  shl eax, 16
-  mov TestShot.velY, eax
-
-  mov TestShot.is_active, 1
+  mov P1Shot.is_active, 1
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; Initialize 3 wall objects on top of each other, in the middle
@@ -256,6 +262,24 @@ GameInit PROC
   mov eax, 320
   shl eax, 16
   mov WALL3.posY, eax
+
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;; Initialize aim arrows
+  mov P1AIM.bitmap, OFFSET ARROW
+
+  mov eax, 50
+  shl eax, 16
+  mov P1AIM.posX, eax
+
+  mov eax, 100
+  shl eax, 16
+  mov P1AIM.posY, eax
+
+  mov eax, 90
+  shl eax, 16
+  mov P1AIM.angle, eax
+
+  mov P1AIM.is_active, 1
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; Make sure game is not paused on startup
@@ -371,7 +395,13 @@ GamePlay PROC
   sar ecx, 16
 
   ;; Draw Player1
+  push ebx
+  push ecx
   INVOKE BasicBlit, Player1.bitmap, ebx, ecx
+
+  pop ecx
+  pop ebx
+  INVOKE RotateBlit, P1AIM.bitmap, ebx, ecx, P1AIM.angle
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; Do a physics on Player2 and then draw it
   mov eax, Player2.accX
@@ -398,26 +428,26 @@ GamePlay PROC
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; Render and do physX if projectile active
-  cmp TestShot.is_active, 1
+  cmp P1Shot.is_active, 1
   jne skip_proj
 
-  mov eax, TestShot.accY
-  add TestShot.velY, eax
-
-  ;; Move the bullet
-  mov eax, TestShot.velX
-  add TestShot.posX, eax
-
-  mov eax, TestShot.velY
-  sub TestShot.posY, eax
+  ;; mov eax, P1Shot.accY
+  ;; add P1Shot.velY, eax
+;;
+  ;; ;; Move the bullet
+  ;; mov eax, P1Shot.velX
+  ;; add P1Shot.posX, eax
+;;
+  ;; mov eax, P1Shot.velY
+  ;; sub P1Shot.posY, eax
 
   ;; Shift position and render bullet
-  mov ebx, TestShot.posX
+  mov ebx, P1Shot.posX
   sar ebx, 16
 
-  mov ecx, TestShot.posY
+  mov ecx, P1Shot.posY
   sar ecx, 16
-  INVOKE BasicBlit, TestShot.bitmap, ebx, ecx
+  INVOKE BasicBlit, P1Shot.bitmap, ebx, ecx
 
   skip_proj:
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -503,6 +533,7 @@ GamePlay PROC
 
   ;; Do firing stuff
   INVOKE DrawStr, OFFSET p1_fire_str, 280, 220, 0ffh
+  add Player1.score, 100
 
   SNotPressed:
   ;; Continue
@@ -515,9 +546,53 @@ GamePlay PROC
 
   ;; Do firing stuff
   INVOKE DrawStr, OFFSET p2_fire_str, 280, 220, 0ffh
+  add Player2.score, 100
 
   DownNotPressed:
   ;; Continue
+
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;; Check if space was pressed. If yes fire proper projectile.
+  mov eax, KeyPress
+  cmp eax, VK_SPACE
+  jne SpaceNotPressed
+
+  ;; Do firing stuff
+  cmp Player1.is_turn, 1
+  jne next_fire
+
+  mov eax, Player1.posY
+  sub eax, 0001B0000h ;; 20
+  mov P1Shot.posY, eax
+
+  mov eax, Player1.posX
+  mov P1Shot.posX, eax
+
+  mov Player1.is_turn, 0
+  mov Player2.is_turn, 1
+
+  mov KeyPress, 0
+  jmp SpaceNotPressed
+
+  ;; Fire P2 projectile, since P1's is inactive.
+  next_fire:
+  cmp Player2.is_turn, 1
+  jne SpaceNotPressed
+
+  mov eax, Player2.posY
+  sub eax, 001B0000h ;; 20
+  mov P1Shot.posY, eax
+
+  mov eax, Player2.posX
+  mov P1Shot.posX, eax
+
+  mov Player1.is_turn, 1
+  mov Player2.is_turn, 0
+
+  mov KeyPress, 0
+  SpaceNotPressed:
+  ;; Continue
+
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; Check if TAB was pressed. If yes , wait for it to be released, then

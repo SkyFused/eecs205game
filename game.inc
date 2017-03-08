@@ -47,9 +47,9 @@ PlayerStruct STRUCT
   ;; Health of this player. Starting health 100
   health DWORD 100
 
-  ;; boolean stored as byte, determines if it's this player's
-  ;; turn to move, shoot, etc.
-  is_turn BYTE ?
+  ;; boolean stored as DWORD, determines if it's this player's
+  ;; turn to move, shoot, etc. By default is 0.
+  is_turn DWORD 0
 
   ;; Position of player on screen
   posX   FXPT 0
@@ -82,12 +82,35 @@ ObjStruct STRUCT
   ;; Acceleration of obj
   accX   FXPT 0
   accY   FXPT 0
-
 ObjStruct ENDS
 
-BULLET TYPEDEF ProjStruct
-PLAYER TYPEDEF PlayerStruct
-OBJECT TYPEDEF ObjStruct
+RotStruct STRUCT
+  ;; bitmap to use for this object
+  bitmap DWORD ?
+
+  ;; boolean to track if active (render and do physX)
+  is_active DWORD ?
+
+  ;; Position of obj on screen
+  posX   FXPT 0
+  posY   FXPT 0
+
+  ;; Velocity of obj
+  velX   FXPT 0
+  velY   FXPT 0
+
+  ;; Acceleration of obj
+  accX   FXPT 0
+  accY   FXPT 0
+
+  ;; Rotation of obj
+  angle  FXPT 0
+RotStruct ENDS
+
+ROTSPRT TYPEDEF RotStruct
+BULLET  TYPEDEF ProjStruct
+PLAYER  TYPEDEF PlayerStruct
+OBJECT  TYPEDEF ObjStruct
 
 MK_CONTROL  = 0008h  ;; The CTRL key is down.
 MK_LBUTTON  = 0001h  ;; The left mouse button is down.
@@ -113,7 +136,9 @@ EXTERNDEF P2TANK:EECS205BITMAP
 EXTERNDEF SHOT_01:EECS205BITMAP
 EXTERNDEF SHOT_02:EECS205BITMAP
 EXTERNDEF SHOT_03:EECS205BITMAP
+EXTERNDEF SHOT_04:EECS205BITMAP
 EXTERNDEF WALL:EECS205BITMAP
+EXTERNDEF ARROW:EECS205BITMAP
 EXTERNDEF StarBitmap:EECS205BITMAP
 
 ;; User Defined Functions
