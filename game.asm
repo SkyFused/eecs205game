@@ -32,11 +32,17 @@ includelib \masm32\lib\user32.lib
   p1_fire_str      BYTE "P1 fired!", 0
   p2_fire_str      BYTE "P2 fired!", 0
   tank_pos_str     BYTE "x: %d", 0
-  tank_pos_out     BYTE 128 DUP (0)
+  tank_pos_out     BYTE 16 DUP (0)
 
   ;; Game info strings
   paused_msg       BYTE "Game Paused", 0
   unpause_msg      BYTE "Press tab to resume!", 0
+
+  score_str        BYTE "$%d", 0
+  score_out        BYTE 32 DUP (0)
+
+  health_str       BYTE "HP: %d", 0
+  health_out       BYTE 16 DUP (0)
 
   ;; Game state vars
   paused_state   DWORD 0
@@ -46,8 +52,8 @@ includelib \masm32\lib\user32.lib
   MaxVeloNeg     DWORD -5
 
   ;; Sprite struct declarations
-  Player1 OBJECT< >
-  Player2 OBJECT< >
+  Player1 PLAYER< >
+  Player2 PLAYER< >
 
   ;; Collision helper vars
   xCollide DWORD 0
@@ -221,6 +227,7 @@ GameInit PROC
 GameInit ENDP
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; The Game Loop
 GamePlay PROC
   ;; Game not paused, waiting for TAB to be released to pause
   cmp tabinit_active, 1
@@ -264,6 +271,12 @@ GamePlay PROC
   ;; Draw the background
   INVOKE DrawStarField
   INVOKE DrawRect, 0, 400, 639, 479, 0ffh
+
+  ;; Draw the player stats
+  INVOKE VarToStr, Player1.health, OFFSET health_str, OFFSET health_out, 5, 100
+  INVOKE VarToStr, Player2.health, OFFSET health_str, OFFSET health_out, 570, 100
+  INVOKE VarToStr, Player1.score, OFFSET score_str, OFFSET score_out, 5, 110
+  INVOKE VarToStr, Player2.score, OFFSET score_str, OFFSET score_out, 570, 110
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; Do a physics on Player1 and then draw it

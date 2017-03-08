@@ -14,7 +14,7 @@ MouseInfo ENDS
 
 FXPT TYPEDEF SDWORD
 
-ObjStruct STRUCT
+ProjStruct STRUCT
   ;; bitmap to use for this object
   bitmap DWORD ?
 
@@ -29,9 +29,40 @@ ObjStruct STRUCT
   ;; Acceleration of obj
   accX   FXPT ?
   accY   FXPT ?
-ObjStruct ENDS
 
-OBJECT TYPEDEF ObjStruct
+  ;; Damage this projectile deals
+  dmg DWORD ?
+ProjStruct ENDS
+
+PlayerStruct STRUCT
+  ;; Bitmap to use for this player
+  bitmap DWORD ?
+
+  ;; Score of this player. Starting score 0
+  score DWORD 0
+
+  ;; Health of this player. Starting health 100
+  health DWORD 100
+
+  ;; boolean stored as byte, determines if it's this player's
+  ;; turn to move, shoot, etc.
+  is_turn BYTE ?
+
+  ;; Position of player on screen
+  posX   FXPT ?
+  posY   FXPT ?
+
+  ;; Velocity of player
+  velX   FXPT ?
+  velY   FXPT ?
+
+  ;; Acceleration of player
+  accX   FXPT ?
+  accY   FXPT ?
+PlayerStruct ENDS
+
+BULLET TYPEDEF ProjStruct
+PLAYER TYPEDEF PlayerStruct
 
 MK_CONTROL  = 0008h  ;; The CTRL key is down.
 MK_LBUTTON  = 0001h  ;; The left mouse button is down.
