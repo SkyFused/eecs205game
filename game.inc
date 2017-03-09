@@ -144,4 +144,6 @@ EXTERNDEF StarBitmap:EECS205BITMAP
 ;; User Defined Functions
 GameInit PROTO
 GamePlay PROTO
+P1ShotPhysX PROTO
+P2ShotPhysX PROTO
 CheckIntersect PROTO oneX:DWORD, oneY:DWORD, oneBitmap:PTR EECS205BITMAP, twoX:DWORD, twoY:DWORD, twoBitmap:PTR EECS205BITMAP

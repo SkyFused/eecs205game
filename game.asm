@@ -44,6 +44,10 @@ includelib \masm32\lib\user32.lib
   paused_msg       BYTE "Game Paused", 0
   unpause_msg      BYTE "Press tab to resume!", 0
 
+  p1_win_str       BYTE "Game Over: P1 Won!!", 0
+  p2_win_str       BYTE "Game Over: P2 Won!!", 0
+  restart_str      BYTE "Press esc to restart.", 0
+
   score_str        BYTE "$%d", 0
   score_out        BYTE 32 DUP (0)
 
@@ -220,8 +224,9 @@ GameInit PROC
   mov Player2.posY, eax
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ;; Initialize a projectile at (300, 300)
+  ;; Initialize P1 projectile at P1 start pos
   mov P1Shot.bitmap, OFFSET SHOT_01
+
   mov eax, 50
   shl eax, 16
   mov P1Shot.posX, eax
@@ -230,15 +235,17 @@ GameInit PROC
   shl eax, 16
   mov P1Shot.posY, eax
 
-  ;; mov eax, 10
-  ;; shl eax, 16
-  ;; mov P1Shot.velX, eax
-;;
-  ;; mov eax, 1
-  ;; shl eax, 16
-  ;; mov P1Shot.velY, eax
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;; Initialize P2 projectile at P2 start pos
+  mov P2Shot.bitmap, OFFSET SHOT_01
 
-  mov P1Shot.is_active, 1
+  mov eax, 550
+  shl eax, 16
+  mov P2Shot.posX, eax
+
+  mov eax, 380
+  shl eax, 16
+  mov P2Shot.posY, eax
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; Initialize 3 wall objects on top of each other, in the middle
@@ -281,22 +288,132 @@ GameInit PROC
   shl eax, 16
   mov P1AIM.posY, eax
 
-  mov eax, 90
+  mov eax, 0
   shl eax, 16
   mov P1AIM.angle, eax
 
   mov P1AIM.is_active, 1
 
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ;; Make sure game is not paused on startup
-  mov paused_state, 0
-
 	ret
 GameInit ENDP
+
+P1ShotPhysX PROC USES eax ebx ecx edx
+  mov eax, P1Shot.accY
+  sub P1Shot.velY, eax
+
+  ;; Move the bullet
+  mov eax, P1Shot.velX
+  add P1Shot.posX, eax
+
+  mov eax, P1Shot.velY
+  sub P1Shot.posY, eax
+
+  ;; Shift position and render bullet
+  mov ebx, P1Shot.posX
+  sar ebx, 16
+
+  mov ecx, P1Shot.posY
+  sar ecx, 16
+
+  push ebx
+  push ecx
+
+  INVOKE BasicBlit, P1Shot.bitmap, ebx, ecx
+
+  pop ecx
+  pop ebx
+
+  ;; Collision Detection
+  mov eax, Player2.posX
+  sar eax, 16
+
+  mov edx, Player2.posY
+  sar edx, 16
+
+  INVOKE CheckIntersect, ebx, ecx, P1Shot.bitmap, eax, edx, Player2.bitmap
+  cmp eax, 1
+  jne end_proj_1
+
+  add Player1.score, 100
+  sub Player2.health, 50
+  mov P1Shot.is_active, 0
+
+  end_proj_1:
+  ret
+P1ShotPhysX ENDP
+
+P2ShotPhysX PROC USES eax ebx ecx edx
+  mov eax, P2Shot.accY
+  sub P2Shot.velY, eax
+
+  ;; Move the bullet
+  mov eax, P2Shot.velX
+  add P2Shot.posX, eax
+
+  mov eax, P2Shot.velY
+  sub P2Shot.posY, eax
+
+  ;; Shift position and render bullet
+  mov ebx, P2Shot.posX
+  sar ebx, 16
+
+  mov ecx, P2Shot.posY
+  sar ecx, 16
+
+  push ebx
+  push ecx
+
+  INVOKE BasicBlit, P2Shot.bitmap, ebx, ecx
+
+  pop ecx
+  pop ebx
+
+  ;; Collision Detection
+  mov eax, Player1.posX
+  sar eax, 16
+
+  mov edx, Player1.posY
+  sar edx, 16
+
+  INVOKE CheckIntersect, ebx, ecx, P2Shot.bitmap, eax, edx, Player1.bitmap
+  cmp eax, 1
+  jne end_proj_2
+
+  add Player2.score, 100
+  sub Player1.health, 50
+  mov P2Shot.is_active, 0
+
+  end_proj_2:
+  ret
+P2ShotPhysX ENDP
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; The Game Loop
 GamePlay PROC
+
+  ;; Check player healths to see if anyone died
+  mov eax, Player1.health
+  cmp eax, 0
+  jg p2_check
+
+  INVOKE ClearScreen
+  INVOKE DrawPauseField
+  INVOKE DrawStr, OFFSET p2_win_str, 245, 220, 0ffh
+  INVOKE DrawStr, OFFSET restart_str, 240, 240, 0ffh
+  jmp FrameComplete
+
+  p2_check:
+  mov eax, Player2.health
+  cmp eax, 0
+  jg tab_checks
+
+  INVOKE ClearScreen
+  INVOKE DrawPauseField
+  INVOKE DrawStr, OFFSET p1_win_str, 245, 220, 0ffh
+  INVOKE DrawStr, OFFSET restart_str, 240, 240, 0ffh
+  jmp FrameComplete
+
+  tab_checks:
   ;; Game not paused, waiting for TAB to be released to pause
   cmp tabinit_active, 1
   je TABINIT
@@ -342,34 +459,34 @@ GamePlay PROC
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; Draw walls if active
-  cmp WALL1.is_active, 1
-  jne wall2_render
-
-  mov eax, WALL1.posX
-  sar eax, 16
-  mov ebx, WALL1.posY
-  sar ebx, 16
-  INVOKE BasicBlit, WALL1.bitmap, eax, ebx
-
-  wall2_render:
-  cmp WALL2.is_active, 1
-  jne wall3_render
-
-  mov eax, WALL2.posX
-  sar eax, 16
-  mov ebx, WALL2.posY
-  sar ebx, 16
-  INVOKE BasicBlit, WALL2.bitmap, eax, ebx
-
-  wall3_render:
-  cmp WALL3.is_active, 1
-  jne no_wall
-
-  mov eax, WALL3.posX
-  sar eax, 16
-  mov ebx, WALL3.posY
-  sar ebx, 16
-  INVOKE BasicBlit, WALL3.bitmap, eax, ebx
+  ;; cmp WALL1.is_active, 1
+  ;; jne wall2_render
+;;
+  ;; mov eax, WALL1.posX
+  ;; sar eax, 16
+  ;; mov ebx, WALL1.posY
+  ;; sar ebx, 16
+  ;; INVOKE BasicBlit, WALL1.bitmap, eax, ebx
+;;
+  ;; wall2_render:
+  ;; cmp WALL2.is_active, 1
+  ;; jne wall3_render
+;;
+  ;; mov eax, WALL2.posX
+  ;; sar eax, 16
+  ;; mov ebx, WALL2.posY
+  ;; sar ebx, 16
+  ;; INVOKE BasicBlit, WALL2.bitmap, eax, ebx
+;;
+  ;; wall3_render:
+  ;; cmp WALL3.is_active, 1
+  ;; jne no_wall
+;;
+  ;; mov eax, WALL3.posX
+  ;; sar eax, 16
+  ;; mov ebx, WALL3.posY
+  ;; sar ebx, 16
+  ;; INVOKE BasicBlit, WALL3.bitmap, eax, ebx
 
   no_wall:
   ;; Draw the player stats
@@ -405,6 +522,7 @@ GamePlay PROC
   push ecx
   INVOKE BasicBlit, Player1.bitmap, ebx, ecx
 
+  ;; Draw the reticle
   pop ecx
   pop ebx
   INVOKE RotateBlit, P1AIM.bitmap, ebx, ecx, P1AIM.angle
@@ -432,31 +550,20 @@ GamePlay PROC
 
   INVOKE BasicBlit, Player2.bitmap, ebx, ecx
 
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ;; Render and do physX if projectile active
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;; Render and do physX if projectiles active
   cmp P1Shot.is_active, 1
+  jne render_proj2
+
+  INVOKE P1ShotPhysX
+
+  render_proj2:
+  cmp P2Shot.is_active, 1
   jne skip_proj
 
-  mov eax, P1Shot.accY
-  add P1Shot.velY, eax
-  ;; Move the bullet
-  mov eax, P1Shot.velX
-  add P1Shot.posX, eax
-  mov eax, P1Shot.velY
-  sub P1Shot.posY, eax
-
-  ;; Shift position and render bullet
-  mov ebx, P1Shot.posX
-  sar ebx, 16
-
-  mov ecx, P1Shot.posY
-  sar ecx, 16
-  INVOKE BasicBlit, P1Shot.bitmap, ebx, ecx
+  INVOKE P2ShotPhysX
 
   skip_proj:
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ;; Check if the projectile intersects with anything.Shift from FXPT to DWORD
-
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; Check if D key was pressed. If yes move right, else brake
   mov eax, KeyPress
@@ -543,12 +650,15 @@ GamePlay PROC
   ;; Continue
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ;; Check if down arrow was pressed. If yes fire P2 projectile
+  ;; Check if down arrow was pressed. If yes fire P2 salvo
   mov eax, KeyPress
   cmp eax, VK_DOWN
   jne DownNotPressed
 
   ;; Do firing stuff
+  cmp Player2.salvo_count, 0
+  jle DownNotPressed
+
   INVOKE DrawStr, OFFSET p2_fire_str, 280, 220, 0ffh
   add Player2.score, 100
 
@@ -565,12 +675,22 @@ GamePlay PROC
   cmp Player1.is_turn, 1
   jne next_fire
 
+  mov P1Shot.is_active, 1
+
   mov eax, Player1.posY
   sub eax, 0001B0000h ;; 20
   mov P1Shot.posY, eax
 
   mov eax, Player1.posX
   mov P1Shot.posX, eax
+
+  mov eax, 10
+  shl eax, 16
+  mov P1Shot.velX, eax
+
+  mov eax, 10
+  shl eax, 16
+  mov P1Shot.velY, eax
 
   mov Player1.is_turn, 0
   mov Player2.is_turn, 1
@@ -585,22 +705,31 @@ GamePlay PROC
   cmp Player2.is_turn, 1
   jne SpaceNotPressed
 
+  mov P2Shot.is_active, 1
+
   mov eax, Player2.posY
-  sub eax, 001B0000h ;; 20
-  mov P1Shot.posY, eax
+  sub eax, 0001B0000h ;; 20
+  mov P2Shot.posY, eax
 
   mov eax, Player2.posX
-  mov P1Shot.posX, eax
+  mov P2Shot.posX, eax
 
-  mov Player1.is_turn, 1
+  mov eax, -10
+  shl eax, 16
+  mov P2Shot.velX, eax
+
+  mov eax, 10
+  shl eax, 16
+  mov P2Shot.velY, eax
+
   mov Player2.is_turn, 0
+  mov Player1.is_turn, 1
 
   INVOKE PlaySound, OFFSET fire_snd , 0, SND_FILENAME OR SND_ASYNC
 
   mov KeyPress, 0
   SpaceNotPressed:
   ;; Continue
-
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; Check if TAB was pressed. If yes , wait for it to be released, then
