@@ -54,12 +54,17 @@ includelib \masm32\lib\user32.lib
   health_str       BYTE "HP: %d", 0
   health_out       BYTE 16 DUP (0)
 
+  salvo_str        BYTE "Salvos: %d", 0
+  salvo_out        BYTE 8 DUP (0)
+
   ;; Game state vars
   paused_state   DWORD 0
   tabloop_active DWORD 0
   tabinit_active DWORD 0
   MaxVelo        DWORD 5
   MaxVeloNeg     DWORD -5
+  P1Wrench_active DWORD 0
+  P2Wrench_active DWORD 0
 
   ;; Sprite struct declarations
   Player1 PLAYER< >
@@ -72,11 +77,13 @@ includelib \masm32\lib\user32.lib
   WALL2 OBJECT< >
   WALL3 OBJECT< >
 
+  HEALTHBOX BULLET< >
+
   P1AIM ROTSPRT< >
   P2AIM ROTSPRT< >
 
-  P1SALVO 5 DUP (BULLET< >)
-  P2SALVO 5 DUP (BULLET< >)
+  P1SALVO BULLET 5 DUP (< >)
+  P2SALVO BULLET 5 DUP (< >)
 
   ;; Collision helper vars
   xCollide DWORD 0
@@ -300,6 +307,23 @@ GameInit PROC
 
   mov P1AIM.is_active, 1
 
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;; Initialize Health Powerup
+
+  mov HEALTHBOX.bitmap, OFFSET WRENCH
+
+  mov HEALTHBOX.dmg, -20
+
+  mov eax, 320
+  shl eax, 16
+  mov HEALTHBOX.posX, eax
+
+  mov eax, 100
+  shl eax, 16
+  mov HEALTHBOX.posY, eax
+
+  mov HEALTHBOX.is_active, 0
+
 	ret
 GameInit ENDP
 
@@ -341,7 +365,7 @@ P1ShotPhysX PROC USES eax ebx ecx edx
   jne end_proj_1
 
   add Player1.score, 100
-  sub Player2.health, 50
+  sub Player2.health, 10
   mov P1Shot.is_active, 0
 
   end_proj_1:
@@ -386,12 +410,114 @@ P2ShotPhysX PROC USES eax ebx ecx edx
   jne end_proj_2
 
   add Player2.score, 100
-  sub Player1.health, 50
+  sub Player1.health, 10
   mov P2Shot.is_active, 0
 
   end_proj_2:
   ret
 P2ShotPhysX ENDP
+
+P1WrenchPhysX PROC USES eax ebx ecx edx
+  INVOKE ClearScreen
+
+  mov HEALTHBOX.is_active, 1
+
+  mov eax, HEALTHBOX.accY
+  sub HEALTHBOX.velY, eax
+
+  ;; Move the box
+  mov eax, HEALTHBOX.velX
+  add HEALTHBOX.posX, eax
+
+  mov eax, HEALTHBOX.velY
+  sub HEALTHBOX.posY, eax
+
+  ;; Shift position and render box
+  mov ebx, HEALTHBOX.posX
+  sar ebx, 16
+
+  mov ecx, HEALTHBOX.posY
+  sar ecx, 16
+
+  push ebx
+  push ecx
+
+  INVOKE BasicBlit, HEALTHBOX.bitmap, ebx, ecx
+
+  pop ecx
+  pop ebx
+
+  ;; Collision Detection
+  mov eax, Player1.posX
+  sar eax, 16
+
+  mov edx, Player1.posY
+  sar edx, 16
+
+  INVOKE CheckIntersect, ebx, ecx, HEALTHBOX.bitmap, eax, edx, Player1.bitmap
+  cmp eax, 1
+  jne end_box_1
+
+  mov eax, HEALTHBOX.dmg
+  sub Player1.health, eax
+  mov HEALTHBOX.is_active, 0
+  mov P1Wrench_active, 0
+  mov HEALTHBOX.velY, 0
+
+  end_box_1:
+  ret
+P1WrenchPhysX ENDP
+
+P2WrenchPhysX PROC USES eax ebx ecx edx
+  INVOKE ClearScreen
+
+  mov HEALTHBOX.is_active, 1
+
+  mov eax, HEALTHBOX.accY
+  sub HEALTHBOX.velY, eax
+
+  ;; Move the box
+  mov eax, HEALTHBOX.velX
+  add HEALTHBOX.posX, eax
+
+  mov eax, HEALTHBOX.velY
+  sub HEALTHBOX.posY, eax
+
+  ;; Shift position and render box
+  mov ebx, HEALTHBOX.posX
+  sar ebx, 16
+
+  mov ecx, HEALTHBOX.posY
+  sar ecx, 16
+
+  push ebx
+  push ecx
+
+  INVOKE BasicBlit, HEALTHBOX.bitmap, ebx, ecx
+
+  pop ecx
+  pop ebx
+
+  ;; Collision Detection
+  mov eax, Player2.posX
+  sar eax, 16
+
+  mov edx, Player2.posY
+  sar edx, 16
+
+  INVOKE CheckIntersect, ebx, ecx, HEALTHBOX.bitmap, eax, edx, Player2.bitmap
+  cmp eax, 1
+  jne end_box_2
+
+  mov eax, HEALTHBOX.dmg
+  sub Player2.health, eax
+  mov HEALTHBOX.is_active, 0
+  mov P2Wrench_active, 0
+  mov HEALTHBOX.velY, 0
+
+  end_box_2:
+  ret
+P2WrenchPhysX ENDP
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; The Game Loop
@@ -411,12 +537,27 @@ GamePlay PROC
   p2_check:
   mov eax, Player2.health
   cmp eax, 0
-  jg tab_checks
+  jg wrench_checks
 
   INVOKE ClearScreen
   INVOKE DrawPauseField
   INVOKE DrawStr, OFFSET p1_win_str, 245, 220, 0ffh
   INVOKE DrawStr, OFFSET restart_str, 240, 240, 0ffh
+  jmp FrameComplete
+
+  wrench_checks:
+  ;; Powerup render logic
+  cmp P1Wrench_active, 1
+  jne wrench_checks2
+
+  INVOKE P1WrenchPhysX
+  jmp FrameComplete
+
+  wrench_checks2:
+  cmp P2Wrench_active, 1
+  jne tab_checks
+
+  INVOKE P2WrenchPhysX
   jmp FrameComplete
 
   tab_checks:
@@ -495,11 +636,18 @@ GamePlay PROC
   ;; INVOKE BasicBlit, WALL3.bitmap, eax, ebx
 
   no_wall:
-  ;; Draw the player stats
+  ;; Draw the player health
   INVOKE VarToStr, Player1.health, OFFSET health_str, OFFSET health_out, 5, 100
   INVOKE VarToStr, Player2.health, OFFSET health_str, OFFSET health_out, 570, 100
+
+  ;; Draw player scores
   INVOKE VarToStr, Player1.score, OFFSET score_str, OFFSET score_out, 5, 110
   INVOKE VarToStr, Player2.score, OFFSET score_str, OFFSET score_out, 570, 110
+
+  ;; Draw player salvo counts
+  ;; INVOKE VarToStr, P1Wrench_active, OFFSET salvo_str, OFFSET salvo_out, 5, 120
+  ;; INVOKE VarToStr, P2Wrench_active, OFFSET salvo_str, OFFSET salvo_out, 550, 120
+
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; Do a physics on Player1 and then draw it
@@ -571,7 +719,7 @@ GamePlay PROC
 
   skip_proj:
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ;; Check if D key was pressed. If yes move right, else brake
+  ;; Check if D key was pressed. If yes move P1 right, else brake
   mov eax, KeyPress
   cmp eax, VK_D
   jne DNotPressed
@@ -589,7 +737,7 @@ GamePlay PROC
   mov Player1.velX, eax
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ;; Check if A key was pressed. If yes move left, else brake
+  ;; Check if A key was pressed. If yes move P1 left, else brake
   mov eax, KeyPress
   cmp eax, VK_A
   jne ANotPressed
@@ -643,30 +791,51 @@ GamePlay PROC
   mov Player2.velX, eax
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ;; Check if S was pressed. If yes fire P1 projectile
+  ;; Check if S was pressed. If yes give P1 powerup
   mov eax, KeyPress
   cmp eax, VK_S
   jne SNotPressed
 
-  ;; Do firing stuff
-  INVOKE DrawStr, OFFSET p1_fire_str, 280, 220, 0ffh
-  add Player1.score, 100
+  ;; Do powerup stuff
+  cmp Player1.score, 500
+  jl DownNotPressed
+
+  sub Player1.score, 500
+  mov P1Wrench_active, 1
+
+  mov eax, Player1.posX
+  mov HEALTHBOX.posX, eax
+
+  mov eax, 100
+  shl eax, 16
+  mov HEALTHBOX.posY, eax
+
+  jmp FrameComplete
 
   SNotPressed:
   ;; Continue
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ;; Check if down arrow was pressed. If yes fire P2 salvo
+  ;; Check if down arrow was pressed. If yes give P2 powerup
   mov eax, KeyPress
   cmp eax, VK_DOWN
   jne DownNotPressed
 
-  ;; Do firing stuff
-  cmp Player2.salvo_count, 0
-  jle DownNotPressed
+  ;; Do powerup stuff
+  cmp Player2.score, 500
+  jl DownNotPressed
 
-  INVOKE DrawStr, OFFSET p2_fire_str, 280, 220, 0ffh
-  add Player2.score, 100
+  sub Player2.score, 500
+  mov P2Wrench_active, 1
+
+  mov eax, Player2.posX
+  mov HEALTHBOX.posX, eax
+
+  mov eax, 100
+  shl eax, 16
+  mov HEALTHBOX.posY, eax
+
+  jmp FrameComplete
 
   DownNotPressed:
   ;; Continue

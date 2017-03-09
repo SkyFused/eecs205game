@@ -8,7 +8,7 @@ to hit their target. You can move and shoot on your turn, and it will be to your
 by making hits on your target, and use this to buy upgrades.
 
 ## Controls
-* P1: WA to move, S to fire salvo
-* P2: LR arrows to move, down arrow to fire salvo
+* P1: WA to move, S to buy powerup ($500, heals 20 HP)
+* P2: LR arrows to move, down arrow to buy powerup.
 * Space: Fire normal shot (players alternate)
 * Tab to pause / un-pause
