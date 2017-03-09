@@ -51,6 +51,9 @@ PlayerStruct STRUCT
   ;; turn to move, shoot, etc. By default is 0.
   is_turn DWORD 0
 
+  ;; Number of salvos player can fire
+  salvo_count DWORD 2
+
   ;; Position of player on screen
   posX   FXPT 0
   posY   FXPT 0

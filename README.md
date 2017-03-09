@@ -8,6 +8,7 @@ to hit their target. You can move and shoot on your turn, and it will be to your
 by making hits on your target, and use this to buy upgrades.
 
 ## Controls
-* P1: WA to move, S to fire
-* P2: LR arrows to move, down arrow to fire
-* Tab to pause / unpause
+* P1: WA to move, S to fire salvo
+* P2: LR arrows to move, down arrow to fire salvo
+* Space: Fire normal shot (players alternate)
+* Tab to pause / un-pause

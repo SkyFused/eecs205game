@@ -64,13 +64,19 @@ includelib \masm32\lib\user32.lib
   ;; Sprite struct declarations
   Player1 PLAYER< >
   Player2 PLAYER< >
+
   P1Shot BULLET< >
   P2Shot BULLET< >
+
   WALL1 OBJECT< >
   WALL2 OBJECT< >
   WALL3 OBJECT< >
+
   P1AIM ROTSPRT< >
   P2AIM ROTSPRT< >
+
+  P1SALVO 5 DUP (BULLET< >)
+  P2SALVO 5 DUP (BULLET< >)
 
   ;; Collision helper vars
   xCollide DWORD 0
