@@ -418,7 +418,6 @@ P2ShotPhysX PROC USES eax ebx ecx edx
 P2ShotPhysX ENDP
 
 P1WrenchPhysX PROC USES eax ebx ecx edx
-  INVOKE ClearScreen
 
   mov HEALTHBOX.is_active, 1
 
@@ -469,7 +468,6 @@ P1WrenchPhysX PROC USES eax ebx ecx edx
 P1WrenchPhysX ENDP
 
 P2WrenchPhysX PROC USES eax ebx ecx edx
-  INVOKE ClearScreen
 
   mov HEALTHBOX.is_active, 1
 
@@ -537,27 +535,12 @@ GamePlay PROC
   p2_check:
   mov eax, Player2.health
   cmp eax, 0
-  jg wrench_checks
+  jg tab_checks
 
   INVOKE ClearScreen
   INVOKE DrawPauseField
   INVOKE DrawStr, OFFSET p1_win_str, 245, 220, 0ffh
   INVOKE DrawStr, OFFSET restart_str, 240, 240, 0ffh
-  jmp FrameComplete
-
-  wrench_checks:
-  ;; Powerup render logic
-  cmp P1Wrench_active, 1
-  jne wrench_checks2
-
-  INVOKE P1WrenchPhysX
-  jmp FrameComplete
-
-  wrench_checks2:
-  cmp P2Wrench_active, 1
-  jne tab_checks
-
-  INVOKE P2WrenchPhysX
   jmp FrameComplete
 
   tab_checks:
@@ -718,6 +701,21 @@ GamePlay PROC
   INVOKE P2ShotPhysX
 
   skip_proj:
+  ;; Powerup render logic
+  cmp P1Wrench_active, 1
+  jne wrench_checks2
+
+  INVOKE P1WrenchPhysX
+  jmp FrameComplete
+
+  wrench_checks2:
+  cmp P2Wrench_active, 1
+  jne check_keys
+
+  INVOKE P2WrenchPhysX
+  jmp FrameComplete
+
+  check_keys:
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; Check if D key was pressed. If yes move P1 right, else brake
   mov eax, KeyPress
