@@ -682,14 +682,8 @@ GamePlay PROC
   sar ecx, 16
 
   ;; Draw Player1
-  push ebx
-  push ecx
   INVOKE BasicBlit, Player1.bitmap, ebx, ecx
 
-  ;; Draw the reticle
-  pop ecx
-  pop ebx
-  INVOKE RotateBlit, P1AIM.bitmap, ebx, ecx, P1AIM.angle
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; Do a physics on Player2 and then draw it
   mov eax, Player2.accX
