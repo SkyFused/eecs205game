@@ -345,6 +345,16 @@ P1ShotPhysX PROC USES eax ebx ecx edx
   mov ecx, P1Shot.posY
   sar ecx, 16
 
+  cmp ebx, 0
+  jle p1_shot_dead
+
+  cmp ebx, 640
+  jge p1_shot_dead
+
+  cmp ecx, 400
+  jge p1_shot_dead
+
+
   push ebx
   push ecx
 
@@ -366,7 +376,11 @@ P1ShotPhysX PROC USES eax ebx ecx edx
 
   add Player1.score, 100
   sub Player2.health, 10
+
+  ;; Shot dead
+  p1_shot_dead:
   mov P1Shot.is_active, 0
+  mov Player1.reloaded, 1
 
   end_proj_1:
   ret
@@ -390,6 +404,15 @@ P2ShotPhysX PROC USES eax ebx ecx edx
   mov ecx, P2Shot.posY
   sar ecx, 16
 
+  cmp ebx, 0
+  jle p2_shot_dead
+
+  cmp ebx, 640
+  jge p2_shot_dead
+
+  cmp ecx, 400
+  jge p2_shot_dead
+
   push ebx
   push ecx
 
@@ -411,6 +434,10 @@ P2ShotPhysX PROC USES eax ebx ecx edx
 
   add Player2.score, 100
   sub Player1.health, 10
+
+  ;; Shot dead
+  p2_shot_dead:
+  mov Player2.reloaded, 1
   mov P2Shot.is_active, 0
 
   end_proj_2:
@@ -848,7 +875,11 @@ GamePlay PROC
   cmp Player1.is_turn, 1
   jne next_fire
 
+  cmp Player1.reloaded, 1
+  jne next_fire
+
   mov P1Shot.is_active, 1
+  mov Player1.reloaded, 0
 
   mov eax, Player1.posY
   sub eax, 0001B0000h ;; 20
@@ -878,7 +909,11 @@ GamePlay PROC
   cmp Player2.is_turn, 1
   jne SpaceNotPressed
 
+  cmp Player2.reloaded, 1
+  jne SpaceNotPressed
+
   mov P2Shot.is_active, 1
+  mov Player2.reloaded, 0
 
   mov eax, Player2.posY
   sub eax, 0001B0000h ;; 20

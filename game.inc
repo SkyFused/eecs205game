@@ -47,6 +47,9 @@ PlayerStruct STRUCT
   ;; Health of this player. Starting health 100
   health DWORD 100
 
+  ;; Has player reloaded yet (is projectile deactivated?)
+  reloaded DWORD 1
+
   ;; boolean stored as DWORD, determines if it's this player's
   ;; turn to move, shoot, etc. By default is 0.
   is_turn DWORD 0
