@@ -866,15 +866,12 @@ GamePlay PROC
   ;; Continue
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ;; Check if space was pressed. If yes fire proper projectile.
+  ;; Check if W was pressed. If yes fire P1 projectile.
   mov eax, KeyPress
-  cmp eax, VK_SPACE
-  jne SpaceNotPressed
-
-  ;; Do firing stuff
-  cmp Player1.is_turn, 1
+  cmp eax, VK_W
   jne next_fire
 
+  ;; Do firing stuff
   cmp Player1.reloaded, 1
   jne next_fire
 
@@ -896,21 +893,17 @@ GamePlay PROC
   shl eax, 16
   mov P1Shot.velY, eax
 
-  mov Player1.is_turn, 0
-  mov Player2.is_turn, 1
-
   INVOKE PlaySound, OFFSET fire_snd , 0, SND_FILENAME OR SND_ASYNC
 
-  mov KeyPress, 0
-  jmp SpaceNotPressed
-
-  ;; Fire P2 projectile, since P1's is inactive.
   next_fire:
-  cmp Player2.is_turn, 1
-  jne SpaceNotPressed
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;; Check if UP was pressed. If yes fire P2 projectile.
+  mov eax, KeyPress
+  cmp eax, VK_UP
+  jne UpNotPressed
 
   cmp Player2.reloaded, 1
-  jne SpaceNotPressed
+  jne UpNotPressed
 
   mov P2Shot.is_active, 1
   mov Player2.reloaded, 0
@@ -930,13 +923,9 @@ GamePlay PROC
   shl eax, 16
   mov P2Shot.velY, eax
 
-  mov Player2.is_turn, 0
-  mov Player1.is_turn, 1
-
   INVOKE PlaySound, OFFSET fire_snd , 0, SND_FILENAME OR SND_ASYNC
 
-  mov KeyPress, 0
-  SpaceNotPressed:
+  UpNotPressed:
   ;; Continue
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
